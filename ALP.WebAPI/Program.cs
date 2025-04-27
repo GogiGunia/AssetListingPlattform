@@ -1,3 +1,10 @@
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System;
+using ALP.Model;
+using System.Reflection;
+
 namespace ALP.WebAPI
 {
     public class Program
@@ -6,50 +13,49 @@ namespace ALP.WebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Logging.ClearProviders();
-
-            ILogger logger = GetStartupLogger(builder.Configuration);
-
-            ConfigureServices(builder.Services);
+            ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
             var app = builder.Build();
 
-
-            logger.LogInformation("Configuring request pipeline...");
             ConfigureRequestPipeline(app);
-
-            logger.LogInformation("Starting Webserver...");
 
             await app.RunAsync();
         }
 
-        private static void ConfigureLogging(IWebHostEnvironment environment, ILoggingBuilder logging, ConfigurationManager configuration)
+        private static void ConfigureServices(IServiceCollection services, ConfigurationManager configuration, IHostEnvironment environment)
         {
-            // More Information for Logging https://learn.microsoft.com/en-us/aspnet/core/fundamentals/logging/
-            logging.ClearProviders();
+            // The method used for passing the configuration in DesignTime is NONE of the ways described by Microsoft...
+            // https://learn.microsoft.com/en-au/ef/core/cli/dbcontext-creation?tabs=vs
+            // At design time, the web application is also started almost normally. As soon as the web application executes builder.Build(),
+            // the services are initialized.
+            // EntityFrameworkCore then subsequently fetches an instance of the DbContext via DI and performs "EntityFramework operations" with it.
+            // The problem: If "multiple startup projects" are used in the solution,
+            // then the EF-Tools no longer find the correct project that should be started ("OmniSys.OTPillar2.WebAPI")
+            // Workarounds:
+            // - Set Startup Projects to "Single startup project" with "ALP.WebAPI" and "Default project" in "Package Manager Console" to: "ALP.Model"
+            // - Include Project (-p) and Startup Project (-s) in the command: "Add-Migration -p ALP.Model -s ALP.WebAPI Name_der_Migration"
+            services.AddDbContext<AlpDbContext>(opt =>
+            {
+                if (environment.IsDevelopment())
+                {
+                    opt.ConfigureWarnings(b =>
+                    {
+                        b.Ignore(CoreEventId.SensitiveDataLoggingEnabledWarning);
+                    });
+                    opt.EnableSensitiveDataLogging();
+                }
 
-            if (environment.IsDevelopment())
-                logging.AddConsole().AddConfiguration(configuration);
+                opt.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 
-            logging.AddLog4Net(GetLog4NetOptions());
-        }
+                opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                sqlServerOptions =>
+                {
+                    sqlServerOptions.UseCompatibilityLevel(160); // TODO should be possible to configure in appsettings!
+                    sqlServerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
 
-        private static Log4NetProviderOptions GetLog4NetOptions()
-        {
-            return new("log4net.config");
-        }
-
-        private static ILogger GetStartupLogger(ConfigurationManager configuration)
-        {
-            using var loggerFactory = LoggerFactory.Create(builder =>
-                builder.AddConsole()
-                       .AddConfiguration(configuration.GetSection("Logging"))
-                       .SetMinimumLevel(LogLevel.Trace));
-
-            return loggerFactory.CreateLogger<Program>();
-        }
-
-        private static void ConfigureServices(IServiceCollection services)
-        {
+                    // Ensures that migrations are only located in the DbContext's assembly
+                    sqlServerOptions.MigrationsAssembly(Assembly.GetAssembly(typeof(AlpDbContext))?.FullName);
+                });
+            });
             services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
@@ -65,7 +71,7 @@ namespace ALP.WebAPI
                 {
                     ushort port = 4200;
                     opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
-                    // Hier könnte Code hin, um die Angular-Cli zu Starten falls auf dem Port keine Anwendung erkannt wird...
+                    // Here, code could be added to start the Angular CLI if no application is running on the port.
                 });
             }
 
