@@ -106,23 +106,23 @@ namespace ALP.Model
             modelBuilder.Entity<AutoListing>(entity =>
             {
                 entity.Property(e => e.Make).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Model).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.AutoModel).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Year).IsRequired();
                 entity.Property(e => e.Kilometers).IsRequired();
                 entity.HasIndex(e => e.Make).HasDatabaseName("IX_Listings_Make");
-                entity.HasIndex(e => e.Model).HasDatabaseName("IX_Listings_Model");
+                entity.HasIndex(e => e.AutoModel).HasDatabaseName("IX_Listings_Model");
                 entity.HasIndex(e => e.Year).HasDatabaseName("IX_Listings_Year");
             });
 
             modelBuilder.Entity<YachtListing>(entity =>
             {
                 entity.Property(e => e.Builder).IsRequired().HasMaxLength(150);
-                entity.Property(e => e.Model).IsRequired().HasMaxLength(150);
+                entity.Property(e => e.YachtModel).IsRequired().HasMaxLength(150);
                 entity.Property(e => e.LengthOverallMeters).IsRequired().HasColumnType("decimal(10,2)");
                 entity.Property(e => e.BuildYear).IsRequired();
                 entity.Property(e => e.Cabins).IsRequired();
                 entity.Property(e => e.Berths).IsRequired();
-                entity.Property(e => e.Location).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.YachtLocation).IsRequired().HasMaxLength(255);
                 entity.HasIndex(e => e.Builder).HasDatabaseName("IX_Listings_Builder");
                 entity.HasIndex(e => e.BuildYear).HasDatabaseName("IX_Listings_BuildYear");
                 entity.HasIndex(e => e.LengthOverallMeters).HasDatabaseName("IX_Listings_LengthOverallMeters");
@@ -131,10 +131,10 @@ namespace ALP.Model
             modelBuilder.Entity<JobListing>(entity =>
             {
                 entity.Property(e => e.EmploymentType).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Location).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.JobLocation).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Salary).IsRequired().HasColumnType("decimal(18,2)");
                 entity.HasIndex(e => e.EmploymentType).HasDatabaseName("IX_Listings_EmploymentType");
-                entity.HasIndex(e => e.Location).HasDatabaseName("IX_Listings_Location");
+                entity.HasIndex(e => e.JobLocation).HasDatabaseName("IX_Listings_Location");
                 entity.HasIndex(e => e.Salary).HasDatabaseName("IX_Listings_Salary");
             });
 

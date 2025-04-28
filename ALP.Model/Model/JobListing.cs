@@ -9,7 +9,7 @@ namespace ALP.Model.Model
     public class JobListing : Listing
     {
         public required string EmploymentType { get; set; }
-        public required string Location { get; set; }
+        public required string JobLocation { get; set; }
         public decimal Salary { get; set; }
     }
 }
