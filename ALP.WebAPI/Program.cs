@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using ALP.Model;
 using System.Reflection;
+using ALP.WebAPI.Middleware.ExceptionHandling;
 
 namespace ALP.WebAPI
 {
@@ -14,6 +15,8 @@ namespace ALP.WebAPI
             var builder = WebApplication.CreateBuilder(args);
 
             ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
+            AddConfigurationInstances(builder.Services, builder.Configuration);
+
             var app = builder.Build();
 
             ConfigureRequestPipeline(app);
@@ -63,21 +66,27 @@ namespace ALP.WebAPI
 
         private static void ConfigureRequestPipeline(WebApplication app)
         {
+            app.UseMiddleware<ExceptionMiddleware>();
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
-                app.UseSpa(opt =>
-                {
-                    ushort port = 4200;
-                    opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
-                    // Here, code could be added to start the Angular CLI if no application is running on the port.
-                });
+                //app.UseSpa(opt =>
+                //{
+                //    ushort port = 4200;
+                //    opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
+                //    // Here, code could be added to start the Angular CLI if no application is running on the port.
+                //});
             }
 
             app.UseHttpsRedirection();
             app.UseAuthorization();
             app.MapControllers();
+        }
+
+        private static void AddConfigurationInstances(IServiceCollection services, ConfigurationManager configuration)
+        {
+            services.Configure<ExceptionHandlingOptions>(configuration.GetSection("ErrorHandling"));
         }
     }
 }
