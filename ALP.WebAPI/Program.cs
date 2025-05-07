@@ -5,6 +5,8 @@ using System;
 using ALP.Model;
 using System.Reflection;
 using ALP.WebAPI.Middleware.ExceptionHandling;
+using OpenTelemetry.Logs; // Add this using statement
+using OpenTelemetry.Resources; // Add this using statement
 
 namespace ALP.WebAPI
 {
@@ -14,6 +16,7 @@ namespace ALP.WebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            ConfigureOpenTelemetryLogging(builder.Logging, builder.Environment, builder.Configuration);
             ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
             AddConfigurationInstances(builder.Services, builder.Configuration);
 
@@ -87,6 +90,42 @@ namespace ALP.WebAPI
         private static void AddConfigurationInstances(IServiceCollection services, ConfigurationManager configuration)
         {
             services.Configure<ExceptionHandlingOptions>(configuration.GetSection("ErrorHandling"));
+        }
+
+        private static void ConfigureOpenTelemetryLogging(ILoggingBuilder loggingBuilder, IHostEnvironment environment, IConfiguration configuration)
+        {
+            // Optional: Set a lower minimum level for more verbose logging in development
+            // This needs to be called on the ILoggingBuilder, not the OpenTelemetryLoggerOptions
+            if (environment.IsDevelopment())
+            {
+                loggingBuilder.SetMinimumLevel(LogLevel.Debug);
+            }
+            // For production, you might set a different minimum level here
+            // else if (environment.IsProduction())
+            // {
+            //     loggingBuilder.SetMinimumLevel(LogLevel.Information);
+            // }
+
+            loggingBuilder.AddOpenTelemetry(options =>
+            {
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault()
+                    .AddService(
+                        serviceName: "ALP.WebAPI",
+                        serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown"));
+
+                if (environment.IsDevelopment())
+                {
+                    options.AddConsoleExporter();
+                }
+                // TODO - For production, you would add a different exporter here (e.g., OTLP)
+                // else if (environment.IsProduction())
+                // {
+                //     options.AddOtlpExporter(exporterOptions =>
+                //     {
+                //         exporterOptions.Endpoint = new Uri(configuration["OpenTelemetry:OtlpExporterEndpoint"]); // Get endpoint from config
+                //     });
+                // }
+            });
         }
     }
 }
