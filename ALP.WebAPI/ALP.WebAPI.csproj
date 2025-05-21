@@ -24,4 +24,8 @@
     <ProjectReference Include="..\ALP.Model\ALP.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>
