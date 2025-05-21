@@ -162,23 +162,30 @@ namespace ALP.WebAPI
         private static void ConfigureRequestPipeline(WebApplication app)
         {
             app.UseMiddleware<ExceptionMiddleware>();
+
+            app.UseHttpsRedirection();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
-                app.UseSpa(opt =>
-                {
-                    ushort port = 4200;
-                    opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
-                    // Here, code could be added to start the Angular CLI if no application is running on the port.
-                });
             }
 
-            app.UseHttpsRedirection();
             app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapControllers();
+
+            //if (app.Environment.IsDevelopment())
+            //{
+            //    app.UseSpa(opt =>
+            //    {
+            //        ushort port = 4200; // Your Angular app's port
+            //        opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
+            //    });
+            //}
         }
 
         private static void AddConfigurationInstances(IServiceCollection services, ConfigurationManager configuration)

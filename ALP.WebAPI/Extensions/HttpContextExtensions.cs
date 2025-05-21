@@ -14,6 +14,7 @@ namespace ALP.WebAPI.Extensions
             return httpContext.Connection.RemoteIpAddress?.ToString() ?? "N/A";
         }
 
+        // TODO , consider changing the structure so that i Have user names or adapt this to look at email. 
         internal static string GetUserName(this HttpContext httpContext)
         {
             return httpContext.User.Identity?.Name ?? string.Empty;

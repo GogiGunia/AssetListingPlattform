@@ -36,6 +36,13 @@ namespace ALP.WebAPI.Middleware.ExceptionHandling
                 _logger.LogError(intEx, "{LogInfo} | Internal Error: {ErrorMessage}", httpContext.GetHttpContextLogInfo(), intEx.Message);
                 await CreateProblemResponse(httpContext, "INTERNAL_SERVER_ERROR", HttpStatusCode.InternalServerError, intEx);
             }
+            catch (BusinessException busEx)
+            {
+                if (!busEx.suppressLogEntry)
+                    _logger.LogError("{logInfo} | {ex}", httpContext.GetHttpContextLogInfo(), busEx);
+
+                await CreateProblemResponse(httpContext, "BUSINESS_ERROR", HttpStatusCode.InternalServerError, busEx);
+            }
             catch (InvalidClientDataException icdEx) 
             {
                 _logger.LogWarning(icdEx, "{LogInfo} | Invalid Client Data: {ErrorMessage}", httpContext.GetHttpContextLogInfo(), icdEx.Message);
