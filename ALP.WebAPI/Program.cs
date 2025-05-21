@@ -14,8 +14,17 @@ using ALP.Model.Model;
 using Microsoft.AspNetCore.Identity;
 using ALP.WebAPI.Exceptions;
 using ALP.WebAPI.Security;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
+using ALP.WebAPI.Middleware;
+using System.IdentityModel.Tokens.Jwt;
+using ALP.WebAPI.Middleware.Handlers;
+using ALP.WebAPI.Middleware.Requirements;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace ALP.WebAPI
 {
@@ -85,63 +94,62 @@ namespace ALP.WebAPI
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
 
-            //services.AddDataProtection()
-            //        .PersistKeysToDbContext<AlpDbContext>();
+            services.AddDataProtection()
+                    .PersistKeysToDbContext<AlpDbContext>();
 
-            //services.AddAuthentication(options =>
-            //{
-            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //}).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-            //{
-            //    var clockSkewSecondsString = builder.Configuration["Authentication:ClockSkewSeconds"]
-            //        ?? throw new ConfigurationException("Authentication:ClockSkewSeconds is not configured."); 
-            //    if (!double.TryParse(clockSkewSecondsString, out var clockSkewSeconds))
-            //    {
-            //        throw new ConfigurationException("Authentication:ClockSkewSeconds is not a valid double."); 
-            //    }
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                var clockSkewSecondsString = configuration["Authentication:ClockSkewSeconds"]
+                    ?? throw new ConfigurationException("Authentication:ClockSkewSeconds is not configured.");
+                if (!double.TryParse(clockSkewSecondsString, out var clockSkewSeconds))
+                {
+                    throw new ConfigurationException("Authentication:ClockSkewSeconds is not a valid double.");
+                }
 
-            //    options.TokenValidationParameters = new TokenValidationParameters
-            //    {
-            //        ValidateIssuer = true,
-            //        ValidateAudience = true,
-            //        ValidateLifetime = true,
-            //        ValidateIssuerSigningKey = true,
-            //        ValidIssuer = builder.Configuration["Authentication:Issuer"]
-            //            ?? throw new ConfigurationException("Authentication:Issuer is not configured."), 
-            //        ValidAudience = builder.Configuration["Authentication:Audience"]
-            //            ?? throw new ConfigurationException("Authentication:Audience is not configured."),
-            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            //            builder.Configuration["Authentication:IssuerSigningKey"]
-            //            ?? throw new ConfigurationException("Authentication:IssuerSigningKey is not configured."))),
-            //        NameClaimType = ClaimTypes.Name, 
-            //        RoleClaimType = ClaimTypes.Role, 
-            //        ClockSkew = TimeSpan.FromSeconds(clockSkewSeconds)
-            //    };
-            //});
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = configuration["Authentication:Issuer"]
+                        ?? throw new ConfigurationException("Authentication:Issuer is not configured."),
+                    ValidAudience = configuration["Authentication:Audience"]
+                        ?? throw new ConfigurationException("Authentication:Audience is not configured."),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                        configuration["Authentication:IssuerSigningKey"]
+                        ?? throw new ConfigurationException("Authentication:IssuerSigningKey is not configured."))),
+                    NameClaimType = ClaimTypes.Name,
+                    RoleClaimType = ClaimTypes.Role,
+                    ClockSkew = TimeSpan.FromSeconds(clockSkewSeconds)
+                };
+            });
 
-            //services.AddAuthorizationBuilder()
-            //        .AddPolicy(Policy.GENERAL_ACCESS, policy => policy
-            //            .RequireAuthenticatedUser()
-            //            .AddRequirements(new RolesRequirement( 
-            //                                UserRole.ClientUser.ToString(), 
-            //                                UserRole.BusinessUser.ToString(),
-            //                                UserRole.Admin.ToString()
-            //            )))
-            //        .AddPolicy(Policy.ELEVATED_ACCESS, policy => policy
-            //            .RequireAuthenticatedUser()
-            //            .AddRequirements(new RolesRequirement(UserRole.Admin.ToString()))) 
-            //        .AddPolicy(Policy.CHANGE_PASSWORD, policy => policy
-            //            .RequireAuthenticatedUser()
-            //            .RequireClaim(JwtRegisteredClaimNames.Typ, ALP.ApiService.Middleware.TokenType.PasswordResetToken.ToString()))
-            //        .AddPolicy(Policy.REFRESH_TOKEN, policy => policy
-            //            .RequireAuthenticatedUser()
-            //            .RequireClaim(JwtRegisteredClaimNames.Typ, ALP.ApiService.Middleware.TokenType.RefreshToken.ToString()));
-            //// The old Policy.EXTERNAL_EDIT is omitted as requested.
+            services.AddAuthorizationBuilder()
+                    .AddPolicy(Policy.GENERAL_ACCESS, policy => policy
+                        .RequireAuthenticatedUser()
+                        .AddRequirements(new RolesRequirement(
+                                            UserRole.ClientUser.ToString(),
+                                            UserRole.BusinessUser.ToString(),
+                                            UserRole.Admin.ToString()
+                        )))
+                    .AddPolicy(Policy.ELEVATED_ACCESS, policy => policy
+                        .RequireAuthenticatedUser()
+                        .AddRequirements(new RolesRequirement(UserRole.Admin.ToString())))
+                    .AddPolicy(Policy.CHANGE_PASSWORD, policy => policy
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(JwtRegisteredClaimNames.Typ, TokenType.PasswordResetToken.ToString()))
+                    .AddPolicy(Policy.REFRESH_TOKEN, policy => policy
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(JwtRegisteredClaimNames.Typ, TokenType.RefreshToken.ToString()));
 
-            //services.AddSingleton<IAuthorizationHandler, RolesAccessHandler>();
-            //services.AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationMiddlewareResultHandler>();
+            services.AddSingleton<IAuthorizationHandler, RolesAccessHandler>();
+            services.AddSingleton<IAuthorizationMiddlewareResultHandler, Middleware.Handlers.AuthorizationMiddlewareResultHandler>();
 
 
             services.AddControllers();
@@ -165,6 +173,8 @@ namespace ALP.WebAPI
             }
 
             app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
         }
