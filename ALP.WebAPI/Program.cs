@@ -5,8 +5,9 @@ using System;
 using ALP.Model;
 using System.Reflection;
 using ALP.WebAPI.Middleware.ExceptionHandling;
-using OpenTelemetry.Logs; // Add this using statement
-using OpenTelemetry.Resources; // Add this using statement
+using OpenTelemetry.Logs; 
+using OpenTelemetry.Resources;
+using Microsoft.Extensions.Configuration.Json; 
 
 namespace ALP.WebAPI
 {
@@ -16,10 +17,17 @@ namespace ALP.WebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            ConfigureOpenTelemetryLogging(builder.Logging, builder.Environment, builder.Configuration);
+            ILogger logger = GetStartupLogger(builder.Configuration);
+
+            //var sources = builder.Configuration.Sources
+            //                .Where(x => x is JsonConfigurationSource jsonConfigSource
+            //                && jsonConfigSource.FileProvider?.GetFileInfo(jsonConfigSource?.Path!).Exists == true)
+            //                .Cast<JsonConfigurationSource>()
+            //                .Select(x => x.Path);
+
             ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
             AddConfigurationInstances(builder.Services, builder.Configuration);
-
+            ConfigureOpenTelemetryLogging(builder.Logging, builder.Environment, builder.Configuration);
             var app = builder.Build();
 
             ConfigureRequestPipeline(app);
@@ -74,12 +82,12 @@ namespace ALP.WebAPI
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
-                //app.UseSpa(opt =>
-                //{
-                //    ushort port = 4200;
-                //    opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
-                //    // Here, code could be added to start the Angular CLI if no application is running on the port.
-                //});
+                app.UseSpa(opt =>
+                {
+                    ushort port = 4200;
+                    opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
+                    // Here, code could be added to start the Angular CLI if no application is running on the port.
+                });
             }
 
             app.UseHttpsRedirection();
@@ -90,6 +98,18 @@ namespace ALP.WebAPI
         private static void AddConfigurationInstances(IServiceCollection services, ConfigurationManager configuration)
         {
             services.Configure<ExceptionHandlingOptions>(configuration.GetSection("ErrorHandling"));
+        }
+
+        private static ILogger GetStartupLogger(ConfigurationManager configuration)
+        {
+            using var loggerFactory = LoggerFactory.Create(builder =>
+               builder.AddConsole()
+                      .AddConfiguration(configuration.GetSection("Logging"))
+                      // Dies folgende Einstellung wird im Normalfall über die Logging-Konfiguration in den appsettings überschrieben.
+                      // Falls dies nicht geschieht, wird sicherheitshalber alles geloggt.
+                      .SetMinimumLevel(LogLevel.Trace));
+
+            return loggerFactory.CreateLogger<Program>();
         }
 
         private static void ConfigureOpenTelemetryLogging(ILoggingBuilder loggingBuilder, IHostEnvironment environment, IConfiguration configuration)
