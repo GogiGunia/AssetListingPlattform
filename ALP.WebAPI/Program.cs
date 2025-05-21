@@ -47,6 +47,8 @@ namespace ALP.WebAPI
             ConfigureOpenTelemetryLogging(builder.Logging, builder.Environment, builder.Configuration);
             var app = builder.Build();
 
+            await ExecuteStartupTasksAsync(app.Services, logger);
+
             ConfigureRequestPipeline(app);
 
             await app.RunAsync();
@@ -231,5 +233,27 @@ namespace ALP.WebAPI
                 // }
             });
         }
+
+        private static async Task ExecuteStartupTasksAsync(IServiceProvider services, ILogger logger)
+        {
+            try
+            {
+                using var scope = services.CreateScope();
+
+                var dbContext = scope.ServiceProvider.GetRequiredService<AlpDbContext>();
+                var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+                if (pendingMigrations.Any())
+                    throw new Exception($"Missing DB-Migrations:\n{string.Join(Environment.NewLine, pendingMigrations)}");
+
+                var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+                await userService.CreateInitialUserAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical("{ex}", ex.Message);
+                throw;
+            }
+        }
+
     }
 }
