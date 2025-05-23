@@ -1,5 +1,0 @@
-<ng-container [ngSwitch]="state">
-    <app-login *ngSwitchCase="'internalAuth'" />
-    <app-logout *ngSwitchCase="'logout'" (backToLogin)="backToLogin()" />
-    <app-loading *ngSwitchDefault style="height: 100%" />
-</ng-container>
