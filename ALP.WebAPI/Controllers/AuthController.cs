@@ -66,7 +66,7 @@ namespace ALP.WebAPI.Controllers
         [Authorize(Policy = Policy.REFRESH_TOKEN)]
         public async Task<ActionResult<TokenBundle>> RefreshTokenAsync()
         {
-            return await CreateTokenbundleAsync(HttpContext.GetUserName(), HttpContext.RequestAborted);
+            return await CreateTokenbundleAsync(HttpContext.GetEmail(), HttpContext.RequestAborted);
         }
 
         private async Task<TokenBundle> CreateTokenbundleAsync(string email, CancellationToken cancellationToken)

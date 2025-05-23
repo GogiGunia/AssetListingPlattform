@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ALP.WebAPI.Extensions
 {
@@ -15,14 +16,22 @@ namespace ALP.WebAPI.Extensions
         }
 
         // TODO , consider changing the structure so that i Have user names or adapt this to look at email. 
-        internal static string GetUserName(this HttpContext httpContext)
+        //internal static string GetUserName(this HttpContext httpContext)
+        //{
+        //    return httpContext.User.Identity?.Name ?? string.Empty;
+        //}
+
+        internal static string GetEmail(this HttpContext httpContext)
         {
-            return httpContext.User.Identity?.Name ?? string.Empty;
+            var email = httpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+            if (email == null)
+                throw new ArgumentNullException("Email not found");
+            return email;
         }
 
         internal static string GetHttpContextLogInfo(this HttpContext httpContext)
         {
-            return $"{httpContext.GetIpAdress()} | {httpContext.GetUserName()} | {httpContext.Request.Method} | {httpContext.Request.Path}";
+            return $"{httpContext.GetIpAdress()} | {httpContext.GetEmail()} | {httpContext.Request.Method} | {httpContext.Request.Path}";
         }
 
         internal static async Task ProblemResponseAsync(this HttpResponse response, ProblemDetails problemDetails)
