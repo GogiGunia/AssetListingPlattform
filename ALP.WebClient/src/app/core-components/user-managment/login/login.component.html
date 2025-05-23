@@ -1,0 +1,34 @@
+<mat-card>
+    <mat-card-header>
+        <mat-card-title>{{appTitle}} {{'ACCOUNT_LOGIN' | lang}}</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+        <form [formGroup]="loginForm">
+            <mat-form-field>
+                <mat-label>{{'ACCOUNT_USER_NAME' | lang}}</mat-label>
+                <input autocomplete="username" matInput formControlName="userName" />
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>{{'ACCOUNT_PASSWORD' | lang}}</mat-label>
+                <input autocomplete="current-password" matInput formControlName="password" type="password" />
+            </mat-form-field>
+
+            <button mat-flat-button
+                    color="primary"
+                    (click)="clickLogin()"
+                    [disabled]="loginButtonDisabled()">
+                {{'ACCOUNT_LOGIN' | lang}}
+            </button>
+
+            <button mat-button
+                    color="primary"
+                    (click)="openRecoverPasswordDialog()">
+                {{'ACCOUNT_PASSWORD_REQUEST_NEW' | lang}}
+            </button>
+
+        </form>
+  <!--       <app-language-selection /> -->
+    </mat-card-content>
+</mat-card>

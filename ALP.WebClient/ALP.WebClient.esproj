@@ -9,8 +9,9 @@
     <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\ALP.WebClient\browser\</BuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="src\app\core-components\" />
+    <Folder Include="src\app\core-components\user-managment\" />
     <Folder Include="src\app\core-services\data-provider\httpInterceptors\" />
     <Folder Include="src\app\core-services\data-provider\services\" />
+    <Folder Include="src\app\pipes\" />
   </ItemGroup>
 </Project>

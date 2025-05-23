@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button'
+import { AuthComponent } from './core-components/user-managment/auth/auth.component';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
-  providers: [MatButtonModule],
+  providers: [MatButtonModule, AuthComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
