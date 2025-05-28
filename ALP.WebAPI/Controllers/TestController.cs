@@ -7,10 +7,10 @@ namespace ALP.WebAPI.Controllers
     public class TestController : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult> GetTestData()
+        public async Task<ActionResult<string>> GetTestData()
         {
             await Task.CompletedTask;
-            throw new Exception("This is a test exception for debugging purposes.");
+            return Ok("hello");
         }
     }
 }

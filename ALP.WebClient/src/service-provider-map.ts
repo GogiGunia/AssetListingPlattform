@@ -14,6 +14,8 @@ export const rootProviders: Provider[] = [
   StorageService,
   { provide: TokenService, useClass: JwtTokenService },
   BroadcastService,
+  { provide: 'SOFTWARE_PRODUCER_TECHNICAL', useValue: 'MetiSystems' },
+  { provide: 'APP_TITLE_TECHNICAL', useValue: 'Jafinda' }
 ]
 
 export const sessionProviders: Provider[] = [

@@ -25,6 +25,7 @@ using ALP.WebAPI.Middleware.Handlers;
 using ALP.WebAPI.Middleware.Requirements;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Builder;
 
 namespace ALP.WebAPI
 {
@@ -151,7 +152,7 @@ namespace ALP.WebAPI
                         .RequireClaim(JwtRegisteredClaimNames.Typ, TokenType.RefreshToken.ToString()));
 
             services.AddSingleton<IAuthorizationHandler, RolesAccessHandler>();
-            services.AddSingleton<IAuthorizationMiddlewareResultHandler, Middleware.Handlers.AuthorizationMiddlewareResultHandler>();
+            //services.AddSingleton<IAuthorizationMiddlewareResultHandler, Middleware.Handlers.AuthorizationMiddlewareResultHandler>();
 
 
             services.AddControllers();
@@ -165,27 +166,32 @@ namespace ALP.WebAPI
 
             app.UseHttpsRedirection();
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
+            if (app.Environment.IsDevelopment())
+            {
+                //app.Use((context, next) =>
+                //{
+                //    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                //    logger.LogInformation("Before UseSpa. Path: {Path}, ResponseStarted: {HasStarted}, Endpoint: {EndpointName}",
+                //        context.Request.Path,
+                //        context.Response.HasStarted,
+                //        context.GetEndpoint()?.DisplayName);
+                //    return next(context);
+                //});
 
-            //if (app.Environment.IsDevelopment())
-            //{
-            //    app.UseSpa(opt =>
-            //    {
-            //        ushort port = 4200; // Your Angular app's port
-            //        opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
-            //    });
-            //}
+                app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"), appBuilder =>
+                {
+                    appBuilder.UseSpa(opt =>
+                    {
+                        ushort port = 4200;
+                        opt.UseProxyToSpaDevelopmentServer($"http://localhost:{port}");
+                    });
+                });
+            }
         }
 
         private static void AddConfigurationInstances(IServiceCollection services, ConfigurationManager configuration)
