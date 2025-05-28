@@ -1,0 +1,9 @@
+<div class="navigation-container">
+    <button mat-button
+            class="nav-item"
+            [class.active]="item.isActive"
+            *ngFor="let item of navigationItemsSignal()"
+            (click)="onNavigationClick(item)">
+        {{ item.name }}
+    </button>
+</div>

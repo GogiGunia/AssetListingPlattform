@@ -1,0 +1,36 @@
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toolbar-title {
+  font-weight: 500;
+  font-size: 20px;
+  margin-right: 32px;
+}
+
+.toolbar-center {
+  display: flex;
+  justify-content: center; 
+  flex-grow: 0;
+  flex-shrink: 0; 
+  width: auto; 
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px; 
+  align-items: center;
+}

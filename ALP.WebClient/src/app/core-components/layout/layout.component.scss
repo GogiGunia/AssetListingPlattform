@@ -1,0 +1,86 @@
+.layout-container {
+  width: 100%;
+  min-height: calc(100vh - 64px); // Subtracting toolbar height
+  padding: var(--layout-padding, 24px);
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  // Material 3 background
+  background-color: var(--mat-app-background-color, #fef7ff);
+}
+
+.layout-content {
+  width: 100%;
+  max-width: var(--layout-max-width, 1200px);
+  // Default grid layout for dynamic content
+  display: grid;
+  gap: var(--layout-gap, 24px);
+  // Responsive grid columns
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  // Auto-adjust rows
+  grid-auto-rows: auto;
+  // Full width for single elements (like login forms)
+  &.single-column {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  // Two columns layout
+  &.two-columns {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+  // Three columns layout
+  &.three-columns {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  // Four columns layout for products/cards
+  &.four-columns {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  // Profile layout - mixed content
+  &.profile-layout {
+    grid-template-columns: 300px 1fr;
+    grid-template-areas:
+      "sidebar main" "sidebar main";
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "sidebar" "main";
+    }
+  }
+  // List layout for vertical content
+  &.list-layout {
+    grid-template-columns: 1fr;
+    gap: var(--layout-gap, 16px);
+  }
+}
+
+// Responsive breakpoints
+@media (max-width: 1200px) {
+  .layout-container {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-container {
+    padding: 12px;
+  }
+
+  .layout-content {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-container {
+    padding: 8px;
+  }
+
+  .layout-content {
+    gap: 12px;
+  }
+}

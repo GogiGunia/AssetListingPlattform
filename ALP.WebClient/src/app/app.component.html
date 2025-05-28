@@ -1,150 +1,34 @@
-<style>
-  :host {
-    --bright-blue: oklch(51.01% 0.274 263.83);
-    --electric-violet: oklch(53.18% 0.28 296.97);
-    --french-violet: oklch(47.66% 0.246 305.88);
-    --vivid-pink: oklch(69.02% 0.277 332.77);
-    --hot-red: oklch(61.42% 0.238 15.34);
-    --orange-red: oklch(63.32% 0.24 31.68);
-    --gray-900: oklch(19.37% 0.006 300.98);
-    --gray-700: oklch(36.98% 0.014 302.71);
-    --gray-400: oklch(70.9% 0.015 304.04);
-    --red-to-pink-to-purple-vertical-gradient: linear-gradient( 180deg, var(--orange-red) 0%, var(--vivid-pink) 50%, var(--electric-violet) 100% );
-    --red-to-pink-to-purple-horizontal-gradient: linear-gradient( 90deg, var(--orange-red) 0%, var(--vivid-pink) 50%, var(--electric-violet) 100% );
-    --pill-accent: var(--bright-blue);
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+<!-- Toolbar with navigation -->
+<app-toolbar 
+  [navigationItems]="navigationItemsSignal()"
+  (navigationChange)="onNavigationChange($event)">
+</app-toolbar>
 
-  body {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+<!-- Layout with dynamic content -->
+<app-layout>
+  <!-- Debug information -->
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Current Active Item</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p><strong>ID:</strong> {{ currentActiveItemSignal().id }}</p>
+      <p><strong>Name:</strong> {{ currentActiveItemSignal().name }}</p>
+      <p><strong>Component:</strong> {{ currentActiveItemSignal().component }}</p>
+      <p><strong>Is Active:</strong> {{ currentActiveItemSignal().isActive }}</p>
+    </mat-card-content>
+  </mat-card>
 
-  h1 {
-    font-size: 3.125rem;
-    color: var(--gray-900);
-    font-weight: 500;
-    line-height: 100%;
-    letter-spacing: -0.125rem;
-    margin: 0;
-    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  }
-
-  p {
-    margin: 0;
-    color: var(--gray-700);
-  }
-
-  .button-container {
-    width: 100%;
-    background: var(--red-to-pink-to-purple-horizontal-gradient);
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem; /* Small gap between buttons */
-  }
-
-  .custom-mat-button {
-    --pill-accent: var(--bright-blue);
-    background: color-mix(in srgb, var(--pill-accent) 5%, transparent);
-    color: lightgoldenrodyellow;
-    padding-inline: 0.75rem;
-    padding-block: 0.375rem;
-    border-radius: 2.75rem;
-    border: 0;
-    transition: background 0.3s ease;
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.4rem;
-    letter-spacing: -0.00875rem;
-  }
-
-    .custom-mat-button:hover {
-      background: color-mix(in srgb, var(--pill-accent) 15%, transparent);
-    }
-
-    .custom-mat-button:nth-child(2) {
-      --pill-accent: var(--french-violet);
-    }
-
-    .custom-mat-button:nth-child(3) {
-      --pill-accent: var(--hot-red);
-    }
-
-    .custom-mat-button:nth-child(4) {
-      --pill-accent: var(--vivid-pink);
-    }
-
-  main {
-    width: 100%;
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-    box-sizing: inherit;
-    position: relative;
-  }
-
-  .welcome-content {
-    text-align: center;
-    max-width: 700px;
-  }
-
-    .welcome-content h1 {
-      margin-bottom: 1.5rem;
-    }
-
-    .welcome-content p {
-      font-size: 1.25rem;
-    }
-
-  @media screen and (max-width: 650px) {
-    .button-container {
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .welcome-content h1 {
-      font-size: 2.5rem;
-    }
-
-    .welcome-content p {
-      font-size: 1rem;
-    }
-  }
-</style>
-
-<div class="button-container">
-    <button mat-button class="custom-mat-button" (click)="navigateTo('immobilien')">Immobilien</button>
-    <button mat-button class="custom-mat-button" (click)="navigateTo('autos')">Autos</button>
-    <button mat-button class="custom-mat-button" (click)="navigateTo('yachten')">Yachten</button>
-    <button mat-button class="custom-mat-button" (click)="navigateTo('jobs')">Jobs</button>
-  
-</div>
-<main>
-    <button mat-button class="custom-mat-button" (click)="apitest()">Hello</button>
-    <!-- <div class="welcome-content">
-      <h1>Welcome to Jafinda</h1>
-      <p>Explore our wide range of assets including real estate, cars, yachts, and job opportunities.</p>
-    </div> -->
-</main>
-
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * The content above * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * * -->
-<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * End of Placeholder  * * * * * * * * * * * * -->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
-
-
-<router-outlet />
+  <!-- Content based on active navigation item -->
+  <mat-card *ngFor="let item of navigationItemsSignal()">
+    <mat-card-header>
+      <mat-card-title [style.color]="item.isActive ? 'red' : 'black'">
+        {{ item.name }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Component: {{ item.component }}</p>
+      <p>Status: {{ item.isActive ? 'ACTIVE' : 'Inactive' }}</p>
+    </mat-card-content>
+  </mat-card>
+</app-layout>

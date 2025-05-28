@@ -10,8 +10,8 @@ export class StorageService {
 
   private readonly keyPrefix: string;
 
-  constructor(@Inject('SOFTWARE_PRODUCER_TECHNICAL') softwareProducer: string,
-    @Inject('APP_TITLE_TECHNICAL') appTitle: string) {
+  constructor(@Inject('SOFTWARE_PRODUCER') softwareProducer: string,
+    @Inject('APP_TITLE') appTitle: string) {
     this.keyPrefix = [softwareProducer, appTitle].join(".");
 
     this.optionsVersionContol();

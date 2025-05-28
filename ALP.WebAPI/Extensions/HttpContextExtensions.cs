@@ -23,10 +23,10 @@ namespace ALP.WebAPI.Extensions
 
         internal static string GetEmail(this HttpContext httpContext)
         {
-            var email = httpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-            if (email == null)
-                throw new ArgumentNullException("Email not found");
-            return email;
+            var emailClaim = httpContext.User.FindFirst(ClaimTypes.Email);
+            if (emailClaim?.Value != null)
+                return emailClaim.Value;
+            return string.Empty;
         }
 
         internal static string GetHttpContextLogInfo(this HttpContext httpContext)

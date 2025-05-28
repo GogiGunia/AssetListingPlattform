@@ -5,17 +5,19 @@ import { StorageService } from "./app/core-services/storage/storage.service";
 import { JwtTokenService } from "./app/core-services/token/jwt-token.service";
 import { TokenService } from "./app/core-services/token/token.service";
 import { BroadcastService } from "./app/core-services/broadcast.service";
-import { HTTP_INTERCEPTORS, HttpInterceptorFn } from "@angular/common/http";
+import { HttpInterceptorFn } from "@angular/common/http";
 import { httpHeadersInterceptor } from "./app/core-services/data-provider/httpInterceptors/http-headers.interceptor";
+import { NavigationService } from "./app/core-services/navigation.service";
 
 export const rootProviders: Provider[] = [
   HttpService,
   LanguageService,
   StorageService,
+  NavigationService,
   { provide: TokenService, useClass: JwtTokenService },
   BroadcastService,
-  { provide: 'SOFTWARE_PRODUCER_TECHNICAL', useValue: 'MetiSystems' },
-  { provide: 'APP_TITLE_TECHNICAL', useValue: 'Jafinda' }
+  { provide: 'SOFTWARE_PRODUCER', useValue: 'MetiSystems' },
+  { provide: 'APP_TITLE', useValue: 'Jafinda' }
 ]
 
 export const sessionProviders: Provider[] = [

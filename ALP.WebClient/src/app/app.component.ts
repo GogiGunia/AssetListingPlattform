@@ -1,28 +1,43 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button'
-import { HttpService } from './core-services/data-provider/services/http.service';
-import { HttpRequestOptions } from './core-services/data-provider/model/HttpRequestOptions';
+import { Component, OnInit, signal, computed, effect } from '@angular/core';
+/*import { RouterOutlet } from '@angular/router';*/
+import { LayoutComponent } from './core-components/layout/layout.component';
+import { ToolbarComponent } from './core-components/toolbar/toolbar.component';
+import { MatCardModule } from '@angular/material/card';
+import { NavigationItem } from './core-models/model';
+import { NavigationService } from './core-services/navigation.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  providers: [MatButtonModule],
+  imports: [LayoutComponent, ToolbarComponent, MatCardModule, CommonModule],
+  providers: [],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
-  title = 'ALP.WebClient';
-  constructor(private httpService: HttpService) { }
-  protected navigateTo(category: string): void {
-    console.log(`Navigating to: ${category}`);
+export class AppComponent implements OnInit {
+
+  // Signals for navigation state
+  public navigationItemsSignal = computed(() => this.navigationService.navigationItemsSignal$());
+  public currentActiveItemSignal = computed(() => this.navigationService.currentActiveItemSignal());
+
+  constructor(private navigationService: NavigationService) {
+    // Effect to log navigation changes
+    effect(() => {
+      console.log("App component - Navigation items changed:");
+      console.log(this.navigationItemsSignal());
+      console.log("App component - Current active item:");
+      console.log(this.currentActiveItemSignal());
+    });
   }
 
-  protected apitest(): void {
-    console.log('API Test function called');
-    const options = new HttpRequestOptions("Test", "text", "body").noAuthRequired();
-    this.httpService.Get(options);
-    console.log(options);
+  public ngOnInit(): void {
+    console.log("App component - OnInit");
+    console.log("App component - Initial navigation items:", this.navigationItemsSignal());
+    console.log("App component - Initial active item:", this.currentActiveItemSignal());
+  }
+
+  public onNavigationChange(item: NavigationItem) {
+    console.log("App component - Navigation change requested:", item);
+    this.navigationService.setActiveItem(item.id);
   }
 }
-
