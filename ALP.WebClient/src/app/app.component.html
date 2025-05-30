@@ -1,34 +1,14 @@
 <!-- Toolbar with navigation -->
-<app-toolbar 
-  [navigationItems]="navigationItemsSignal()"
-  (navigationChange)="onNavigationChange($event)">
+<app-toolbar [navigationMenuItems]="navigationMenuItemsSignal()"
+             [toolbarActionItems]="toolbarActionItemsSignal()"
+             (navigationChange)="onNavigationChange($event)"
+             (toolbarActionClick)="onToolbarActionClick($event)"
+             (goBack)="onGoBack()"
+             (goHome)="onGoHome()">
 </app-toolbar>
 
-<!-- Layout with dynamic content -->
+<!-- Layout with router outlet for dynamic content -->
 <app-layout>
-  <!-- Debug information -->
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Current Active Item</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <p><strong>ID:</strong> {{ currentActiveItemSignal().id }}</p>
-      <p><strong>Name:</strong> {{ currentActiveItemSignal().name }}</p>
-      <p><strong>Component:</strong> {{ currentActiveItemSignal().component }}</p>
-      <p><strong>Is Active:</strong> {{ currentActiveItemSignal().isActive }}</p>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Content based on active navigation item -->
-  <mat-card *ngFor="let item of navigationItemsSignal()">
-    <mat-card-header>
-      <mat-card-title [style.color]="item.isActive ? 'red' : 'black'">
-        {{ item.name }}
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <p>Component: {{ item.component }}</p>
-      <p>Status: {{ item.isActive ? 'ACTIVE' : 'Inactive' }}</p>
-    </mat-card-content>
-  </mat-card>
+  <!-- Router outlet will display the routed components here -->
+  <router-outlet></router-outlet>
 </app-layout>

@@ -1,0 +1,62 @@
+<div class="page-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>account_circle</mat-icon>
+      <mat-card-title>User Profile</mat-card-title>
+      <mat-card-subtitle>Manage your account information</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="profile-section">
+        <h3>Personal Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Display Name:</span>
+            <span class="value">{{ userService.userDisplayName() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Email Address:</span>
+            <span class="value">{{ userService.userEmail() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">User Role:</span>
+            <span class="value role-badge" [class]="getRoleClass()">
+              {{ userService.getCurrentUserRole() }}
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">User ID:</span>
+            <span class="value">{{ userService.getCurrentUserId() || 'Not loaded' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="profile-section">
+        <h3>Account Status</h3>
+        <div class="status-info">
+          <div class="status-item">
+            <mat-icon class="status-icon success">check_circle</mat-icon>
+            <span>Account is active and verified</span>
+          </div>
+          <div class="status-item" *ngIf="userService.isProfileComplete()">
+            <mat-icon class="status-icon success">verified_user</mat-icon>
+            <span>Profile is complete</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-raised-button color="primary">
+        <mat-icon>edit</mat-icon>
+        Edit Profile
+      </button>
+      <button mat-raised-button color="warn" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

@@ -12,5 +12,7 @@
     <Folder Include="src\app\core-components\user\" />
     <Folder Include="src\app\core-services\data-provider\httpInterceptors\" />
     <Folder Include="src\app\core-services\data-provider\services\" />
+    <Folder Include="src\app\jafinda-components\" />
+    <Folder Include="src\app\guards\" />
   </ItemGroup>
 </Project>

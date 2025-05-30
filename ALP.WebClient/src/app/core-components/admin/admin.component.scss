@@ -1,0 +1,43 @@
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.admin-header {
+  margin-bottom: 24px;
+}
+
+.admin-icon {
+  background-color: #f44336 !important;
+  color: white;
+}
+
+.admin-welcome {
+  background-color: #fff3e0;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #ff9800;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.admin-card {
+  transition: transform 0.2s ease;
+}
+
+.admin-card:hover {
+  transform: translateY(-2px);
+}
+
+.admin-card mat-card-actions {
+  padding: 16px;
+}
+
+.admin-card button {
+  width: 100%;
+}

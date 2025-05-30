@@ -2,3 +2,46 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+.snackbar-success {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.snackbar-error {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.snackbar-info {
+  background-color: #2196f3 !important;
+  color: white !important;
+}
+
+/* Custom snackbar button color */
+.snackbar-success .mat-mdc-snack-bar-action,
+.snackbar-error .mat-mdc-snack-bar-action,
+.snackbar-info .mat-mdc-snack-bar-action {
+  color: white !important;
+}
+
+/* Material 3 form field custom styling */
+.mat-mdc-form-field {
+  .mat-mdc-text-field-wrapper {
+    .mat-mdc-form-field-flex {
+      .mat-mdc-form-field-infix {
+        padding: 14px 0 14px 0;
+      }
+    }
+  }
+}
+
+/* Custom error styling for form validation */
+.mat-form-field-invalid {
+  .mat-mdc-form-field-outline-thick {
+    color: var(--mat-sys-error) !important;
+  }
+
+  .mat-mdc-form-field-outline {
+    color: var(--mat-sys-error) !important;
+  }
+}

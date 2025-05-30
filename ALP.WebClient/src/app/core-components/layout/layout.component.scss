@@ -18,6 +18,9 @@
   gap: var(--layout-gap, 24px);
   // Responsive grid columns
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  // CENTER GRID ITEMS - This is the key fix
+  justify-items: center;
+  align-items: start;
   // Auto-adjust rows
   grid-auto-rows: auto;
   // Full width for single elements (like login forms)
@@ -55,6 +58,20 @@
     grid-template-columns: 1fr;
     gap: var(--layout-gap, 16px);
   }
+}
+
+// Target direct children of layout-content (router-outlet content)
+.layout-content > * {
+  justify-self: center;
+  align-self: start;
+  max-width: fit-content;
+}
+
+// Specific targeting for Material cards
+.layout-content mat-card,
+.layout-content .mat-mdc-card {
+  margin: 0 auto;
+  justify-self: center;
 }
 
 // Responsive breakpoints

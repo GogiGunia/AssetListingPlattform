@@ -1,0 +1,49 @@
+.page-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header-card {
+  margin-bottom: 20px;
+}
+
+.access-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #e3f2fd;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  color: #1976d2;
+}
+
+.listings-tabs {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-content {
+  padding: 24px;
+  min-height: 300px;
+}
+
+.placeholder-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+  color: #666;
+  text-align: center;
+}
+
+.placeholder-message mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}

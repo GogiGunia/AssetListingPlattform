@@ -1,13 +1,14 @@
+// jwt-token.service.ts - Complete updated JWT token service
 import { Injectable, OnDestroy, signal, WritableSignal } from '@angular/core';
 import { Location } from '@angular/common';
 import { TokenService } from './token.service';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, Subject, Subscription, tap, map, of, throwError, catchError, finalize, share } from 'rxjs';
-import { AccessLevel } from '../../core-models/auth.model';
+import { AccessLevel, LoginRequest, LoginUserViewModel } from '../../core-models/auth.model';
 import { HttpRequestOptions } from '../data-provider/model/HttpRequestOptions';
 import { HttpService } from '../data-provider/services/http.service';
 import { StorageService } from '../storage/storage.service';
-import { TokenTypeText, TokenType, JwtTokenBundle, DecodedAccessToken, DecodedRefreshToken } from './token.model';
+import { TokenTypeText, TokenType, DecodedAccessToken, DecodedRefreshToken, JwtTokenBundle } from './token.model';
 import { BroadcastService } from '../broadcast.service';
 
 @Injectable()
@@ -36,7 +37,7 @@ export class JwtTokenService extends TokenService implements OnDestroy {
 
   protected override set token(value: string | undefined) {
     this.accessTokenObj = new DecodedAccessToken(value);
-    if (this.accessTokenObj.rawToken) { // Check if the rawToken (after construction) is non-empty
+    if (this.accessTokenObj.rawToken) {
       this.storageService.save("LOCAL", "ACCESS_TOKEN", this.accessTokenObj.rawToken);
     } else {
       this.storageService.remove("LOCAL", "ACCESS_TOKEN");
@@ -69,7 +70,7 @@ export class JwtTokenService extends TokenService implements OnDestroy {
 
     this.initializeTokenState();
     this.hasValidToken$ = new BehaviorSubject<undefined | TokenTypeText>(
-      this.accessTokenObj?.tokenType 
+      this.accessTokenObj?.tokenType
     );
 
     this.isInitialized.set(true);
@@ -81,8 +82,7 @@ export class JwtTokenService extends TokenService implements OnDestroy {
     let initialRefreshTokenString: string | null | undefined;
 
     if (initialAccessTokenString != null && initialAccessTokenString.length > 0) {
-      // Token from URL
-      // Consider clearing from URL:
+      // Token from URL - consider clearing from URL for security
       // this.router.navigate([], { queryParams: { token: null }, queryParamsHandling: 'merge', replaceUrl: true });
     } else {
       initialAccessTokenString = this.storageService.load("LOCAL", "ACCESS_TOKEN");
@@ -106,31 +106,27 @@ export class JwtTokenService extends TokenService implements OnDestroy {
   }
 
   private assignTokensInternal(accessToken?: string, refreshToken?: string, shouldBroadcast: boolean = true): string | undefined {
-    this.token = accessToken;       // Uses setter for DecodedAccessToken
-    this.refreshToken = refreshToken; // Uses setter for DecodedRefreshToken
+    this.token = accessToken;
+    this.refreshToken = refreshToken;
     this._manualLogout = false;
 
-    // hasValidToken$ is updated within the 'this.token' setter
-
     if (shouldBroadcast) {
-      if (accessToken && refreshToken) { // Typically a full login
+      if (accessToken && refreshToken) {
         this.broadcastService.loginChannel.postMessage({
           accessToken: accessToken,
           refreshToken: refreshToken
         });
-      } else if (accessToken) { // Typically a token refresh (only access token changes)
+      } else if (accessToken) {
         this.broadcastService.refreshChannel.postMessage(accessToken);
       }
     }
-    return this.token; // Returns the raw access token string
+    return this.token;
   }
 
   public override isExpired(): boolean {
-    // Use the isExpired method from DecodedJwtTokenBase
     return this.accessTokenObj?.isExpired() ?? true;
   }
 
-  // getUserRole now uses the 'role' getter from DecodedJwtTokenBase
   public getUserRole(): string | undefined {
     return this.accessTokenObj?.role;
   }
@@ -146,34 +142,50 @@ export class JwtTokenService extends TokenService implements OnDestroy {
   }
 
   public override getTokenType(): undefined | TokenType {
-    // this.accessTokenObj.tokenType is TokenTypeText | undefined (e.g., "AccessToken")
     const tokenTypeText = this.accessTokenObj?.tokenType;
     if (tokenTypeText) {
-      // Map the string type (e.g., "AccessToken") to the TokenType enum member
       return TokenType[tokenTypeText as keyof typeof TokenType];
     }
     return undefined;
   }
 
-  public override authenticate({ userName, password }: { userName: string, password: string }): Observable<void> {
-    return this.httpService.Get<JwtTokenBundle>( // JwtTokenBundle has accessToken?: string, refreshToken?: string
-      new HttpRequestOptions(`Auth/${userName}`, "json", "body").noAuthRequired().setHeaders({ password: password })
+  /**
+   * Updated authenticate method - now uses email instead of userName
+   * Returns the full LoginUserViewModel response from backend
+   */
+  public override authenticate(loginRequest: LoginRequest): Observable<LoginUserViewModel> {
+    const { email, password } = loginRequest;
+    return this.httpService.Get<LoginUserViewModel>(
+      new HttpRequestOptions(`Auth/${email}`, "json", "body")
+        .noAuthRequired()
+        .setHeaders({ password: password })
     ).pipe(
       tap(response => {
+        // Set tokens from response
         this.assignTokensInternal(response.accessToken, response.refreshToken, true);
-      }),
-      map(() => undefined)
+      })
     );
+  }
+
+  /**
+   * Convenience method that handles both token setting and returns the response
+   * This is what the login component should use
+   */
+  public authenticateAndSetTokens(loginRequest: LoginRequest): Observable<LoginUserViewModel> {
+    return this.authenticate(loginRequest);
   }
 
   public override resetService(isTriggeredByBroadcast: boolean = false): void {
     this.token = undefined;
     this.refreshToken = undefined;
-    // hasValidToken$ is updated by token setters
+    this._manualLogout = true;
 
     if (!isTriggeredByBroadcast) {
       this.broadcastService.logoutChannel.postMessage(true);
     }
+
+    // Emit logout event
+    this.logout$.next();
   }
 
   public override getValidatedToken(): Observable<string> {
@@ -181,7 +193,6 @@ export class JwtTokenService extends TokenService implements OnDestroy {
       return of(this.accessTokenObj.rawToken);
     }
 
-    // Check refresh token validity using its own isExpired method
     if (this.refreshTokenObj?.rawToken && !this.refreshTokenObj.isExpired()) {
       return this.doTokenRefresh();
     }
@@ -196,14 +207,16 @@ export class JwtTokenService extends TokenService implements OnDestroy {
     }
 
     return this.accessTokenObservable ??= this.httpService.Get<JwtTokenBundle>(
-      new HttpRequestOptions("Auth", "json", "body").noAuthRequired().setHeaders({ Authorization: `bearer ${this.refreshToken}` })
+      new HttpRequestOptions("Auth", "json", "body")
+        .noAuthRequired()
+        .setHeaders({ Authorization: `bearer ${this.refreshToken}` })
     ).pipe(
       map(response => {
         const newAccessToken = this.assignTokensInternal(response.accessToken, response.refreshToken, true);
         if (!newAccessToken) {
           throw new Error('Token refresh failed to return a new access token.');
         }
-        return newAccessToken; // newAccessToken is string | undefined, ensure it's string here
+        return newAccessToken;
       }),
       catchError((error) => {
         this.resetService(true);
@@ -215,5 +228,12 @@ export class JwtTokenService extends TokenService implements OnDestroy {
       }),
       share()
     );
+  }
+
+  /**
+   * Manual logout method
+   */
+  public logout(): void {
+    this.resetService(false);
   }
 }

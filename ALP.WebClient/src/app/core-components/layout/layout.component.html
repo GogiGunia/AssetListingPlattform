@@ -1,5 +1,7 @@
 <div class="layout-container" [ngClass]="layoutClass">
-      <div class="layout-content" [ngClass]="contentClass">
-        <ng-content></ng-content>
-      </div>
+  <div class="layout-content">
+    <div class="grid-wrapper" [ngClass]="contentClass">
+      <ng-content></ng-content>
     </div>
+  </div>
+</div>

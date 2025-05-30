@@ -1,0 +1,74 @@
+<div class="page-container">
+  <mat-card class="admin-header">
+    <mat-card-header>
+      <mat-icon mat-card-avatar class="admin-icon">admin_panel_settings</mat-icon>
+      <mat-card-title>Admin Panel</mat-card-title>
+      <mat-card-subtitle>System administration and management</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="admin-welcome">
+        <p>Welcome, {{ userService.userDisplayName() }}!</p>
+        <p>You have administrative privileges for the Asset Listing Platform.</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="admin-grid">
+    <mat-card class="admin-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>people</mat-icon>
+        <mat-card-title>User Management</mat-card-title>
+        <mat-card-subtitle>Manage users and roles</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions>
+        <button mat-raised-button color="primary">
+          <mat-icon>manage_accounts</mat-icon>
+          Manage Users
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="admin-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>list_alt</mat-icon>
+        <mat-card-title>Listing Management</mat-card-title>
+        <mat-card-subtitle>Oversee all listings</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions>
+        <button mat-raised-button color="primary">
+          <mat-icon>view_list</mat-icon>
+          View All Listings
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="admin-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>analytics</mat-icon>
+        <mat-card-title>Analytics</mat-card-title>
+        <mat-card-subtitle>Platform statistics</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions>
+        <button mat-raised-button color="primary">
+          <mat-icon>bar_chart</mat-icon>
+          View Analytics
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="admin-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>settings</mat-icon>
+        <mat-card-title>System Settings</mat-card-title>
+        <mat-card-subtitle>Configure platform settings</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions>
+        <button mat-raised-button color="primary">
+          <mat-icon>settings</mat-icon>
+          Settings
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

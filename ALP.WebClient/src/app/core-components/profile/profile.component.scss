@@ -1,0 +1,83 @@
+.page-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.profile-section {
+  margin: 20px 0;
+}
+
+.profile-section h3 {
+  margin-bottom: 16px;
+  color: #666;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.label {
+  font-weight: 500;
+  color: #666;
+}
+
+.value {
+  font-weight: 400;
+}
+
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.role-badge.admin {
+  background-color: #f44336;
+  color: white;
+}
+
+.role-badge.business {
+  background-color: #ff9800;
+  color: white;
+}
+
+.role-badge.client {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-icon {
+  font-size: 20px;
+}
+
+.status-icon.success {
+  color: #4caf50;
+}
+
+mat-card-actions {
+  display: flex;
+  gap: 12px;
+}

@@ -1,36 +1,149 @@
+/* toolbar.component.scss - Updated styles with authentication */
 .app-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 64px;
+  padding: 0 16px;
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .toolbar-title {
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.875rem;
+      opacity: 0.8;
+
+      .user-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      .user-name {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .toolbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    max-width: 600px;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .auth-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.1);
+
+      .auth-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+
+        &.online {
+          color: #4caf50;
+        }
+
+        &.offline {
+          color: #ff9800;
+        }
+      }
+
+      .auth-text {
+        font-weight: 500;
+      }
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      button {
+        position: relative;
+
+        .action-badge {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          background-color: #f44336;
+          color: white;
+          border-radius: 8px;
+          padding: 2px 6px;
+          font-size: 0.625rem;
+          font-weight: 500;
+          min-width: 16px;
+          text-align: center;
+        }
+      }
+    }
+  }
 }
 
-.toolbar-title {
-  font-weight: 500;
-  font-size: 20px;
-  margin-right: 32px;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-toolbar {
+    .toolbar-left {
+      .user-info {
+        display: none; // Hide user info on mobile
+      }
+    }
+
+    .toolbar-center {
+      max-width: none;
+      flex: 0.6;
+    }
+
+    .toolbar-right {
+      .auth-status {
+        .auth-text {
+          display: none; // Hide text on mobile, keep icon
+        }
+      }
+    }
+  }
 }
 
-.toolbar-center {
-  display: flex;
-  justify-content: center; 
-  flex-grow: 0;
-  flex-shrink: 0; 
-  width: auto; 
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
+@media (max-width: 480px) {
+  .app-toolbar {
+    padding: 0 8px;
 
-.toolbar-spacer {
-  flex: 1 1 auto;
-}
+    .toolbar-left {
+      .toolbar-title {
+        font-size: 1rem;
+      }
+    }
 
-.toolbar-actions {
-  display: flex;
-  gap: 8px; 
-  align-items: center;
+    .toolbar-right {
+      gap: 8px;
+
+      .auth-status {
+        padding: 2px 4px;
+      }
+    }
+  }
 }

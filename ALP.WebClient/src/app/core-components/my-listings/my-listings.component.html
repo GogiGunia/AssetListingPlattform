@@ -1,0 +1,72 @@
+<div class="page-container">
+  <mat-card class="header-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>list_alt</mat-icon>
+      <mat-card-title>My Listings</mat-card-title>
+      <mat-card-subtitle>Manage your asset listings</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <p>Welcome, {{ userService.userDisplayName() }}! Here you can manage all your asset listings.</p>
+
+      <div class="access-info" *ngIf="userService.isAdmin()">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span>You have administrator access to all listings</span>
+      </div>
+
+      <div class="access-info" *ngIf="userService.hasRole('BusinessUser')">
+        <mat-icon>business</mat-icon>
+        <span>You have business user access to manage your listings</span>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-raised-button color="primary">
+        <mat-icon>add</mat-icon>
+        Create New Listing
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-tab-group class="listings-tabs">
+    <mat-tab label="Real Estate">
+      <div class="tab-content">
+        <p>Your real estate listings will appear here.</p>
+        <div class="placeholder-message">
+          <mat-icon>home_work</mat-icon>
+          <span>No real estate listings yet. Create your first listing!</span>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Autos">
+      <div class="tab-content">
+        <p>Your auto listings will appear here.</p>
+        <div class="placeholder-message">
+          <mat-icon>directions_car</mat-icon>
+          <span>No auto listings yet. Create your first listing!</span>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Jobs">
+      <div class="tab-content">
+        <p>Your job postings will appear here.</p>
+        <div class="placeholder-message">
+          <mat-icon>work</mat-icon>
+          <span>No job listings yet. Create your first listing!</span>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Yachts">
+      <div class="tab-content">
+        <p>Your yacht listings will appear here.</p>
+        <div class="placeholder-message">
+          <mat-icon>sailing</mat-icon>
+          <span>No yacht listings yet. Create your first listing!</span>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

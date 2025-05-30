@@ -8,12 +8,16 @@ import { BroadcastService } from "./app/core-services/broadcast.service";
 import { HttpInterceptorFn } from "@angular/common/http";
 import { httpHeadersInterceptor } from "./app/core-services/data-provider/httpInterceptors/http-headers.interceptor";
 import { NavigationService } from "./app/core-services/navigation.service";
+import { UserService } from "./app/core-services/user.service";
+import { LogoutService } from "./app/core-services/logout.service";
 
 export const rootProviders: Provider[] = [
   HttpService,
   LanguageService,
   StorageService,
   NavigationService,
+  UserService,
+  LogoutService,
   { provide: TokenService, useClass: JwtTokenService },
   BroadcastService,
   { provide: 'SOFTWARE_PRODUCER', useValue: 'MetiSystems' },

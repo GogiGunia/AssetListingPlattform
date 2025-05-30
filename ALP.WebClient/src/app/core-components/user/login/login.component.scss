@@ -2,43 +2,71 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 64px); // Match layout.component.scss toolbar height
-  background-color: #FEF7FF;
-  padding: 24px;
-  box-sizing: border-box;
+  min-height: 60vh;
+  padding: 20px;
 }
 
 .login-card {
+  max-width: 450px;
   width: 100%;
-  max-width: 400px;
-  background-color: #FFFFFF;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  padding: 16px 0;
 }
 
 .full-width {
   width: 100%;
 }
 
-.button-group {
+.login-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 12px;
+  padding: 20px;
 }
 
-// Responsive adjustments
-@media (max-width: 768px) {
-  .login-container {
-    padding: 16px;
-  }
+.login-button {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
 }
 
+.spinner {
+  margin-right: 12px;
+}
+
+.forgot-password-btn {
+  color: var(--mat-sys-primary);
+  text-decoration: underline;
+}
+
+mat-card-header {
+  text-align: center;
+  padding: 24px 24px 16px 24px;
+}
+
+mat-card-title {
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+mat-card-subtitle {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+/* Error styling */
+.mat-form-field-invalid .mat-form-field-outline {
+  color: var(--mat-sys-error);
+}
+
+/* Responsive design */
 @media (max-width: 480px) {
   .login-container {
     padding: 12px;
