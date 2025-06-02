@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpResponseType, ObserveOptions, HttpResponseOutput, HttpRequestMethodType } from '../model/data-provider.model';
 import { HttpRequestOptions } from '../model/HttpRequestOptions';
+import { environment } from '../../../../environments/environment.prod';
 
 @Injectable()
 export class HttpService {
@@ -11,7 +12,7 @@ export class HttpService {
   private readonly basePath: string;
 
   constructor(private http: HttpClient) {
-    this.basePath = window.location.origin;
+    this.basePath = this.basePath = environment.production ? '' : window.location.origin;
   }
 
   public requestStarted(): void { this.requestCount++; }

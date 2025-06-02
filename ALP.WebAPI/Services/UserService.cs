@@ -19,7 +19,7 @@ namespace ALP.WebAPI.Services
         private readonly AlpDbContext _dbContext;
         private readonly ILogger<UserService> _logger;
         private readonly IPasswordHasher<User> _passwordHasher;
-        private readonly ITokenService _tokenService; 
+        private readonly ITokenService _tokenService;
         public UserService(AlpDbContext dbContext,
                            ILogger<UserService> logger,
                            IPasswordHasher<User> passwordHasher,
@@ -33,7 +33,7 @@ namespace ALP.WebAPI.Services
         public Task<User> GetUserAsync(HttpContext httpContext, bool enableTracking = false, CancellationToken cancellationToken = default)
         {
             var userEmail = httpContext.User.FindFirstValue(ClaimTypes.Email);
-            
+
             if (string.IsNullOrEmpty(userEmail))
             {
                 _logger.LogWarning("User email claim (ClaimTypes.Email) not found in HttpContext for an authenticated user path.");
@@ -168,6 +168,49 @@ namespace ALP.WebAPI.Services
             string jwtToken = _tokenService.CreateToken(TokenType.PasswordResetToken, user);
 
             return jwtToken;
+        }
+        public async Task<UserRegistrationResponseModel> RegisterUserAsync(RegisterRequestModel registerRequest, CancellationToken cancellationToken = default)
+        {
+            if (registerRequest == null)
+                throw new ArgumentNullException(nameof(registerRequest));
+
+            if (registerRequest.UserModel == null)
+                throw new ArgumentNullException(nameof(registerRequest.UserModel));
+
+            if (string.IsNullOrWhiteSpace(registerRequest.Password))
+                throw new ArgumentException("Password cannot be null or empty.", nameof(registerRequest.Password));
+
+            _logger.LogInformation("Attempting to register new user with email: {Email}", registerRequest.UserModel.Email);
+
+            // Use your existing CreateUserAsync method
+            var createdUser = await CreateUserAsync(registerRequest.UserModel, registerRequest.Password, cancellationToken);
+
+            _logger.LogInformation("Successfully registered user with ID: {UserId} and email: {Email}",
+                createdUser.Id, createdUser.Email);
+
+            // Map to response model (excluding sensitive data)
+            var response = new UserRegistrationResponseModel
+            {
+                Id = createdUser.Id,
+                Email = createdUser.Email,
+                FirstName = createdUser.FirstName,
+                LastName = createdUser.LastName,
+                Role = createdUser.Role,
+                CreatedAt = createdUser.CreatedAt
+            };
+
+            return response;
+        }
+
+        /// <summary>
+        /// Check if email already exists
+        /// </summary>
+        public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+            // You might want to add this method to your repository if it doesn't exist
+            return await _dbContext.Users.AnyAsync(u => u.Email.ToLower() == email.Trim().ToLower(), cancellationToken);
         }
 
         #region Password Generation (Copied from original, review for suitability)

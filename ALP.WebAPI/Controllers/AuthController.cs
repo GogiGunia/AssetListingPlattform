@@ -47,6 +47,9 @@ namespace ALP.WebAPI.Controllers
                 Email = user!.Email,
                 AccessToken = tokenbundle.AccessToken,
                 RefreshToken = tokenbundle.RefreshToken,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = user.Role.ToString()
             };
 
             // TODO Logging

@@ -74,12 +74,14 @@ export class NavigationService {
   // Base navigation items signal (your existing items)
   private baseNavigationItemsSignal = signal<NavigationItem[]>(this.defaultNavigationItems);
 
+  // Active route tracking signal for authentication-based items
+  private activeRouteSignal = signal<string>('home');
+
   // Computed signal that combines base items with authentication-based items
   private navigationItemsSignal = computed(() => {
     const baseItems = this.baseNavigationItemsSignal();
     const authItems = this.getAuthenticationBasedItems();
-    const filteredAuthItems = this.filterAuthenticationItems(baseItems, authItems);
-    return [...baseItems, ...filteredAuthItems];
+    return [...baseItems, ...authItems];
   });
 
   // Your existing computed signals (preserved exactly)
@@ -92,8 +94,17 @@ export class NavigationService {
     return this.navigationItemsSignal().filter(item => item.showInNavigation === true);
   });
 
+  // FIXED: Authentication-aware toolbar actions
   public toolbarActionItemsSignal = computed(() => {
-    return this.navigationItemsSignal().filter(item => item.showInNavigation === false);
+    const allActionItems = this.navigationItemsSignal().filter(item => item.showInNavigation === false);
+
+    if (this.isAuthenticated()) {
+      // When logged in, hide login/register, show logout/profile actions
+      return allActionItems.filter(item => !['login', 'register'].includes(item.id));
+    } else {
+      // When not logged in, show login/register, hide logout/profile actions
+      return allActionItems.filter(item => ['login', 'register'].includes(item.id));
+    }
   });
 
   // Public readonly signal for all navigation items (preserved exactly)
@@ -119,12 +130,12 @@ export class NavigationService {
 
     // Effect to log authentication changes and navigation updates
     effect(() => {
-      console.log('NavigationService - Authentication state changed:');
-      console.log('  Is authenticated:', this.isAuthenticated());
-      console.log('  User:', this.userDisplayName());
-      console.log('  Total navigation items:', this.navigationItemsSignal().length);
-      console.log('  Menu items:', this.navigationMenuItemsSignal().length);
-      console.log('  Action items:', this.toolbarActionItemsSignal().length);
+      //console.log('NavigationService - Authentication state changed:');
+      //console.log('  Is authenticated:', this.isAuthenticated());
+      //console.log('  User:', this.userDisplayName());
+      //console.log('  Total navigation items:', this.navigationItemsSignal().length);
+      //console.log('  Menu items:', this.navigationMenuItemsSignal().length);
+      //console.log('  Action items:', this.toolbarActionItemsSignal().length);
     });
   }
 
@@ -133,6 +144,7 @@ export class NavigationService {
    */
   private getAuthenticationBasedItems(): NavigationItem[] {
     const items: NavigationItem[] = [];
+    const activeRoute = this.activeRouteSignal(); // Get current active route
 
     if (this.isAuthenticated()) {
       // Authenticated user navigation items (showInNavigation: true)
@@ -140,7 +152,7 @@ export class NavigationService {
         id: 'dashboard',
         name: 'Dashboard',
         component: 'DashboardComponent',
-        isActive: false,
+        isActive: activeRoute === 'dashboard', // Set active based on current route
         showInNavigation: true,
         icon: 'dashboard'
       });
@@ -151,7 +163,7 @@ export class NavigationService {
           id: 'my-listings',
           name: 'My Listings',
           component: 'MyListingsComponent',
-          isActive: false,
+          isActive: activeRoute === 'my-listings', // Set active based on current route
           showInNavigation: true,
           icon: 'list_alt'
         });
@@ -162,7 +174,7 @@ export class NavigationService {
           id: 'admin',
           name: 'Admin Panel',
           component: 'AdminComponent',
-          isActive: false,
+          isActive: activeRoute === 'admin', // Set active based on current route
           showInNavigation: true,
           icon: 'admin_panel_settings'
         });
@@ -173,7 +185,7 @@ export class NavigationService {
         id: 'profile',
         name: `${this.userDisplayName()} (${this.userEmail()})`,
         component: 'ProfileComponent',
-        isActive: false,
+        isActive: activeRoute === 'profile', // Set active based on current route
         showInNavigation: false,
         icon: 'account_circle'
       });
@@ -182,7 +194,7 @@ export class NavigationService {
         id: 'logout',
         name: 'Logout',
         component: '', // No component, it's an action
-        isActive: false,
+        isActive: false, // Logout is never "active"
         showInNavigation: false,
         icon: 'logout'
       });
@@ -190,28 +202,6 @@ export class NavigationService {
     // Note: login/register items are already in defaultNavigationItems
 
     return items;
-  }
-
-  /**
-   * Filter authentication items based on current auth state
-   */
-  private filterAuthenticationItems(baseItems: NavigationItem[], authItems: NavigationItem[]): NavigationItem[] {
-    const filteredBaseItems = baseItems.map(item => {
-      // Hide login/register when authenticated
-      if ((item.id === 'login' || item.id === 'register') && this.isAuthenticated()) {
-        return { ...item, showInNavigation: false };
-      }
-      // Show login/register when not authenticated  
-      if ((item.id === 'login' || item.id === 'register') && !this.isAuthenticated()) {
-        return { ...item, showInNavigation: false }; // Keep as toolbar actions
-      }
-      return item;
-    });
-
-    // ❌ Remove this line - don't modify signals inside computed
-    // this.baseNavigationItemsSignal.set(filteredBaseItems);
-
-    return authItems;
   }
 
   // Your existing navigation history methods (preserved exactly)
@@ -222,26 +212,31 @@ export class NavigationService {
     if (this.navigationHistory.length === 0 ||
       this.navigationHistory[this.navigationHistory.length - 1] !== routeId) {
       this.navigationHistory.push(routeId);
-      console.log('Navigation service - History updated:', this.navigationHistory);
+      //  console.log('Navigation service - History updated:', this.navigationHistory);
     }
   }
 
+  // FIXED: Update active item from route for both base and auth items
   private updateActiveItemFromRoute(url: string): void {
     const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
     const routeId = cleanUrl || 'home';
 
+    // Update active route signal - this will trigger recomputation of authentication items
+    this.activeRouteSignal.set(routeId);
+
+    // Update base items
     const baseItems = this.baseNavigationItemsSignal().map(item => ({
       ...item,
       isActive: item.id === routeId
     }));
 
     this.baseNavigationItemsSignal.set(baseItems);
-    console.log('Navigation service - Active item updated from route:', routeId);
+    //console.log('Navigation service - Active item updated from route:', routeId);
   }
 
   // Enhanced navigation method that handles authentication actions
   public navigateToRoute(routeId: string): void {
-    console.log('Navigation service - Navigating to route:', routeId);
+    //console.log('Navigation service - Navigating to route:', routeId);
 
     // Handle authentication-specific actions
     if (this.handleAuthenticationAction(routeId)) {
@@ -258,24 +253,24 @@ export class NavigationService {
   private handleAuthenticationAction(actionId: string): boolean {
     switch (actionId) {
       case 'login':
-        console.log('NavigationService - Handling login action');
+        //console.log('NavigationService - Handling login action');
         this.router.navigate(['/login']);
         return true;
 
       case 'register':
-        console.log('NavigationService - Handling register action');
+        //console.log('NavigationService - Handling register action');
         this.router.navigate(['/register']);
         return true;
 
       case 'logout':
-        console.log('NavigationService - Handling logout action');
+        //console.log('NavigationService - Handling logout action');
         this.logoutService.logout().subscribe(() => {
-          console.log('NavigationService - User logged out successfully');
+          //  console.log('NavigationService - User logged out successfully');
         });
         return true;
 
       case 'profile':
-        console.log('NavigationService - Handling profile action');
+        //console.log('NavigationService - Handling profile action');
         this.router.navigate(['/profile']);
         return true;
 
@@ -286,21 +281,21 @@ export class NavigationService {
 
   // Your existing methods (preserved exactly)
   public goBack(): void {
-    console.log('Navigation service - Go back called. Current history:', this.navigationHistory);
+    //console.log('Navigation service - Go back called. Current history:', this.navigationHistory);
 
     if (this.navigationHistory.length >= 2) {
       this.navigationHistory.pop();
       const previousRoute = this.navigationHistory[this.navigationHistory.length - 1];
-      console.log('Navigation service - Going back to:', previousRoute);
+      //console.log('Navigation service - Going back to:', previousRoute);
       this.router.navigate([`/${previousRoute}`]);
     } else {
-      console.log('Navigation service - No previous route, going home');
+      //console.log('Navigation service - No previous route, going home');
       this.goHome();
     }
   }
 
   public goHome(): void {
-    console.log('Navigation service - Going home');
+    //console.log('Navigation service - Going home');
     this.navigationHistory = ['home'];
     this.router.navigate(['/home']);
   }

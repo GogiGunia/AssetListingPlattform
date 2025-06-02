@@ -18,7 +18,6 @@ import { UserService } from './core-services/user.service';
 })
 export class AppComponent implements OnInit {
 
-  // Your existing signals (preserved exactly)
   public navigationMenuItemsSignal = computed(() => this.navigationService.navigationMenuItemsSignal());
   public toolbarActionItemsSignal = computed(() => this.navigationService.toolbarActionItemsSignal());
   public currentActiveItemSignal = computed(() => this.navigationService.currentActiveItemSignal());
@@ -33,50 +32,40 @@ export class AppComponent implements OnInit {
   ) {
     // Enhanced effect that includes authentication state (preserves your existing logging)
     effect(() => {
-      console.log("App component - Navigation menu items changed:");
-      console.log(this.navigationMenuItemsSignal());
-      console.log("App component - Toolbar action items:");
-      console.log(this.toolbarActionItemsSignal());
-      console.log("App component - Current active item:");
-      console.log(this.currentActiveItemSignal());
 
-      // Additional authentication logging
-      console.log("App component - Authentication state:");
-      console.log("  Is authenticated:", this.isAuthenticated());
-      console.log("  User:", this.userDisplayName());
     });
   }
 
   public ngOnInit(): void {
-    console.log("App component - OnInit");
-    console.log("App component - Initial navigation menu items:", this.navigationMenuItemsSignal());
-    console.log("App component - Initial toolbar action items:", this.toolbarActionItemsSignal());
-    console.log("App component - Initial active item:", this.currentActiveItemSignal());
+    //console.log("App component - OnInit");
+    //console.log("App component - Initial navigation menu items:", this.navigationMenuItemsSignal());
+    //console.log("App component - Initial toolbar action items:", this.toolbarActionItemsSignal());
+    //console.log("App component - Initial active item:", this.currentActiveItemSignal());
 
-    // Additional authentication initialization logging
-    console.log("App component - Initial authentication state:", this.isAuthenticated());
-    console.log("App component - Initial user:", this.userDisplayName());
+    //// Additional authentication initialization logging
+    //console.log("App component - Initial authentication state:", this.isAuthenticated());
+    //console.log("App component - Initial user:", this.userDisplayName());
   }
 
   // Your existing event handlers (preserved exactly)
   public onNavigationChange(item: NavigationItem) {
-    console.log("App component - Navigation change requested:", item);
+   /* console.log("App component - Navigation change requested:", item);*/
     this.navigationService.setActiveItem(item.id);
   }
 
   public onToolbarActionClick(item: NavigationItem) {
-    console.log("App component - Toolbar action clicked:", item);
+    //console.log("App component - Toolbar action clicked:", item);
     // NavigationService now handles authentication actions automatically
     this.navigationService.setActiveItem(item.id);
   }
 
   public onGoBack() {
-    console.log("App component - Go back requested");
+    //console.log("App component - Go back requested");
     this.navigationService.goBack();
   }
 
   public onGoHome() {
-    console.log("App component - Go home requested");
+    //console.log("App component - Go home requested");
     this.navigationService.goHome();
   }
 }

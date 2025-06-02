@@ -1,7 +1,7 @@
 // token.service.ts - Updated base TokenService
 import { Injectable, WritableSignal } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { AccessLevel, LoginRequest, LoginUserViewModel } from '../../core-models/auth.model';
+import { AccessLevel, LoginRequest, LoginUserViewModel, User } from '../../core-models/auth.model';
 import { TokenType, TokenTypeText } from './token.model';
 
 
@@ -12,7 +12,7 @@ export abstract class TokenService {
 
   public abstract get token(): string | undefined;
 
-  public abstract authenticate(loginRequest: LoginRequest): Observable<LoginUserViewModel>;
+  public abstract authenticate(loginRequest: LoginRequest): Observable<User>;
 
   public abstract setTokens(accessToken?: string, refreshToken?: string): void;
 

@@ -8,20 +8,37 @@
     <mat-card-content>
       <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="register-form">
 
-        <!-- Full Name Field -->
+        <!-- First Name Field -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Full Name</mat-label>
+          <mat-label>First Name</mat-label>
           <input matInput
                  type="text"
-                 formControlName="fullName"
-                 placeholder="Enter your full name"
-                 [class.mat-form-field-invalid]="isFieldInvalid('fullName')">
+                 formControlName="firstName"
+                 placeholder="Enter your first name"
+                 [class.mat-form-field-invalid]="isFieldInvalid('firstName')">
           <mat-icon matSuffix>person</mat-icon>
-          <mat-error *ngIf="registerForm.get('fullName')?.hasError('required')">
-            Full name is required
+          <mat-error *ngIf="registerForm.get('firstName')?.hasError('required')">
+            First name is required
           </mat-error>
-          <mat-error *ngIf="registerForm.get('fullName')?.hasError('minlength')">
-            Full name must be at least 2 characters long
+          <mat-error *ngIf="registerForm.get('firstName')?.hasError('minlength')">
+            First name must be at least 2 characters long
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Last Name Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Last Name</mat-label>
+          <input matInput
+                 type="text"
+                 formControlName="lastName"
+                 placeholder="Enter your last name"
+                 [class.mat-form-field-invalid]="isFieldInvalid('lastName')">
+          <mat-icon matSuffix>person</mat-icon>
+          <mat-error *ngIf="registerForm.get('lastName')?.hasError('required')">
+            Last name is required
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('lastName')?.hasError('minlength')">
+            Last name must be at least 2 characters long
           </mat-error>
         </mat-form-field>
 
@@ -39,6 +56,23 @@
           </mat-error>
           <mat-error *ngIf="registerForm.get('email')?.hasError('email')">
             Please enter a valid email address
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Role Selection Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Account Type</mat-label>
+          <mat-select formControlName="role"
+                      [class.mat-form-field-invalid]="isFieldInvalid('role')">
+            <mat-option *ngFor="let roleOption of roleOptions"
+                        [value]="roleOption.value">
+              <mat-icon>{{ roleOption.icon }}</mat-icon>
+              {{ roleOption.displayName }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>business</mat-icon>
+          <mat-error *ngIf="registerForm.get('role')?.hasError('required')">
+            Please select an account type
           </mat-error>
         </mat-form-field>
 

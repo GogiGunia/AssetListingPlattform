@@ -33,9 +33,9 @@ export const httpHeadersInterceptor: HttpInterceptorFn = (
     return tokenService.getValidatedToken().pipe(
       switchMap((token) => {
         if (token == null || token === '') {
-          console.warn(
-            `Request "${req.urlWithParams}" was omitted. No valid token is available. If you intend to send a request without a token, please use ".noAuthRequired()" on the HttpRequestOptions`
-          );
+          //console.warn(
+          //  `Request "${req.urlWithParams}" was omitted. No valid token is available. If you intend to send a request without a token, please use ".noAuthRequired()" on the HttpRequestOptions`
+          //);
           return NEVER;
         } else {
           return next(

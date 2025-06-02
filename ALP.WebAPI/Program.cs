@@ -5,7 +5,7 @@ using System;
 using ALP.Model;
 using System.Reflection;
 using ALP.WebAPI.Middleware.ExceptionHandling;
-using OpenTelemetry.Logs; 
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using Microsoft.Extensions.Configuration.Json;
 using ALP.WebAPI.Interfaces;
@@ -26,6 +26,7 @@ using ALP.WebAPI.Middleware.Requirements;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Builder;
+using System.Text.Json.Serialization;
 
 namespace ALP.WebAPI
 {
@@ -36,12 +37,6 @@ namespace ALP.WebAPI
             var builder = WebApplication.CreateBuilder(args);
 
             ILogger logger = GetStartupLogger(builder.Configuration);
-
-            //var sources = builder.Configuration.Sources
-            //                .Where(x => x is JsonConfigurationSource jsonConfigSource
-            //                && jsonConfigSource.FileProvider?.GetFileInfo(jsonConfigSource?.Path!).Exists == true)
-            //                .Cast<JsonConfigurationSource>()
-            //                .Select(x => x.Path);
 
             ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
             AddConfigurationInstances(builder.Services, builder.Configuration);
@@ -57,17 +52,6 @@ namespace ALP.WebAPI
 
         private static void ConfigureServices(IServiceCollection services, ConfigurationManager configuration, IHostEnvironment environment)
         {
-            // The method used for passing the configuration in DesignTime is NONE of the ways described by Microsoft...
-            // https://learn.microsoft.com/en-au/ef/core/cli/dbcontext-creation?tabs=vs
-            // At design time, the web application is also started almost normally. As soon as the web application executes builder.Build(),
-            // the services are initialized.
-            // EntityFrameworkCore then subsequently fetches an instance of the DbContext via DI and performs "EntityFramework operations" with it.
-            // The problem: If "multiple startup projects" are used in the solution,
-            // then the EF-Tools no longer find the correct project that should be started ("OmniSys.OTPillar2.WebAPI")
-            // Workarounds:
-            // - Set Startup Projects to "Single startup project" with "ALP.WebAPI" and "Default project" in "Package Manager Console" to: "ALP.Model"
-            // - Include Project (-p) and Startup Project (-s) in the command: "Add-Migration -p ALP.Model -s ALP.WebAPI Name_der_Migration"
-
             services.AddDbContext<AlpDbContext>(opt =>
             {
                 if (environment.IsDevelopment())
@@ -84,10 +68,8 @@ namespace ALP.WebAPI
                 opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
                 sqlServerOptions =>
                 {
-                    sqlServerOptions.UseCompatibilityLevel(160); // TODO should be possible to configure in appsettings!
+                    sqlServerOptions.UseCompatibilityLevel(160);
                     sqlServerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-
-                    // Ensures that migrations are only located in the DbContext's assembly
                     sqlServerOptions.MigrationsAssembly(Assembly.GetAssembly(typeof(AlpDbContext))?.FullName);
                 });
             });
@@ -99,6 +81,24 @@ namespace ALP.WebAPI
 
             services.AddDataProtection()
                     .PersistKeysToDbContext<AlpDbContext>();
+
+            // Configure HTTPS Redirection
+            services.AddHttpsRedirection(options =>
+            {
+                options.RedirectStatusCode = StatusCodes.Status301MovedPermanently;
+                options.HttpsPort = 443; // Standard HTTPS port
+            });
+
+            // Configure HSTS (HTTP Strict Transport Security)
+            if (!environment.IsDevelopment())
+            {
+                services.AddHsts(options =>
+                {
+                    options.Preload = true;
+                    options.IncludeSubDomains = true;
+                    options.MaxAge = TimeSpan.FromDays(365); // 1 year
+                });
+            }
 
             services.AddAuthentication(options =>
             {
@@ -152,9 +152,34 @@ namespace ALP.WebAPI
                         .RequireClaim(JwtRegisteredClaimNames.Typ, TokenType.RefreshToken.ToString()));
 
             services.AddSingleton<IAuthorizationHandler, RolesAccessHandler>();
-            //services.AddSingleton<IAuthorizationMiddlewareResultHandler, Middleware.Handlers.AuthorizationMiddlewareResultHandler>();
 
+            // CORS Configuration for Production
+            services.AddCors(options =>
+            {
+                options.AddPolicy("ProductionCORS", policy =>
+                {
+                    if (environment.IsDevelopment())
+                    {
+                        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
+                    else
+                    {
+                        // More permissive for production to allow crawlers
+                        policy.SetIsOriginAllowed(origin => true) // Allow any origin for crawlers
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
+                });
+            });
 
+            services.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
             services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
@@ -164,25 +189,62 @@ namespace ALP.WebAPI
         {
             app.UseMiddleware<ExceptionMiddleware>();
 
+            // Add HSTS in production (before HTTPS redirection)
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHsts();
+            }
+
+            // Force HTTPS redirection (this will redirect HTTP to HTTPS)
             app.UseHttpsRedirection();
+
+            // Enable CORS
+            app.UseCors("ProductionCORS");
+
+            // Bot handler middleware - BEFORE static files
+            app.UseMiddleware<BotHandlerMiddleware>();
+
+            // Serve static files (Angular build)
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseDefaultFiles(); // Serves index.html by default
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    OnPrepareResponse = ctx =>
+                    {
+                        // Don't cache HTML files for bots, cache other static files
+                        var isBot = IsRequestFromBot(ctx.Context.Request.Headers.UserAgent);
+                        if (ctx.File.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (isBot)
+                            {
+                                ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+                                ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+                                ctx.Context.Response.Headers.Append("Expires", "0");
+                            }
+                            else
+                            {
+                                ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+                            }
+                        }
+                        else
+                        {
+                            // Cache static assets for 1 year
+                            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
+                        }
+                    }
+                });
+            }
 
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+
             if (app.Environment.IsDevelopment())
             {
-                //app.Use((context, next) =>
-                //{
-                //    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-                //    logger.LogInformation("Before UseSpa. Path: {Path}, ResponseStarted: {HasStarted}, Endpoint: {EndpointName}",
-                //        context.Request.Path,
-                //        context.Response.HasStarted,
-                //        context.GetEndpoint()?.DisplayName);
-                //    return next(context);
-                //});
-
+                // Development: Use Angular dev server proxy
                 app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"), appBuilder =>
                 {
                     appBuilder.UseSpa(opt =>
@@ -192,6 +254,27 @@ namespace ALP.WebAPI
                     });
                 });
             }
+            else
+            {
+                // Production: Fallback to index.html for Angular routing
+                app.MapFallbackToFile("index.html");
+            }
+        }
+
+        // Add this helper method to your Program class:
+        private static bool IsRequestFromBot(string userAgent)
+        {
+            if (string.IsNullOrEmpty(userAgent))
+                return false;
+
+            var botPatterns = new[]
+            {
+        "WhatsApp", "facebookexternalhit", "Twitterbot", "LinkedInBot",
+        "Slackbot", "TelegramBot", "bot", "crawler", "spider", "Googlebot"
+    };
+
+            return botPatterns.Any(pattern =>
+                userAgent.Contains(pattern, StringComparison.OrdinalIgnoreCase));
         }
 
         private static void AddConfigurationInstances(IServiceCollection services, ConfigurationManager configuration)
@@ -204,8 +287,6 @@ namespace ALP.WebAPI
             using var loggerFactory = LoggerFactory.Create(builder =>
                builder.AddConsole()
                       .AddConfiguration(configuration.GetSection("Logging"))
-                      // Dies folgende Einstellung wird im Normalfall über die Logging-Konfiguration in den appsettings überschrieben.
-                      // Falls dies nicht geschieht, wird sicherheitshalber alles geloggt.
                       .SetMinimumLevel(LogLevel.Trace));
 
             return loggerFactory.CreateLogger<Program>();
@@ -213,17 +294,10 @@ namespace ALP.WebAPI
 
         private static void ConfigureOpenTelemetryLogging(ILoggingBuilder loggingBuilder, IHostEnvironment environment, IConfiguration configuration)
         {
-            // Optional: Set a lower minimum level for more verbose logging in development
-            // This needs to be called on the ILoggingBuilder, not the OpenTelemetryLoggerOptions
             if (environment.IsDevelopment())
             {
                 loggingBuilder.SetMinimumLevel(LogLevel.Debug);
             }
-            // For production, you might set a different minimum level here
-            // else if (environment.IsProduction())
-            // {
-            //     loggingBuilder.SetMinimumLevel(LogLevel.Information);
-            // }
 
             loggingBuilder.AddOpenTelemetry(options =>
             {
@@ -236,14 +310,6 @@ namespace ALP.WebAPI
                 {
                     options.AddConsoleExporter();
                 }
-                // TODO - For production, you would add a different exporter here (e.g., OTLP)
-                // else if (environment.IsProduction())
-                // {
-                //     options.AddOtlpExporter(exporterOptions =>
-                //     {
-                //         exporterOptions.Endpoint = new Uri(configuration["OpenTelemetry:OtlpExporterEndpoint"]); // Get endpoint from config
-                //     });
-                // }
             });
         }
 
@@ -267,6 +333,5 @@ namespace ALP.WebAPI
                 throw;
             }
         }
-
     }
 }

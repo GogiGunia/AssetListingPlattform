@@ -1,1 +1,169 @@
-<p>home works!</p>
+<!-- Hero Section -->
+<div class="hero-section">
+  <mat-card class="hero-card">
+    <mat-card-content>
+      <div class="hero-content">
+        <h1 class="hero-title">Welcome to Jafinda</h1>
+        <h2 class="hero-subtitle">Your Premier Asset Listing Platform</h2>
+        <p class="hero-description">
+          Discover the best listings across multiple categories. Whether you're looking for your dream home,
+          the perfect vehicle, luxury yachts, or your next career opportunity - we've got you covered.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="cta-buttons">
+          <button mat-raised-button color="primary" class="primary-cta" (click)="navigateToListings()">
+            <mat-icon>search</mat-icon>
+            Explore All Listings
+          </button>
+          <button mat-stroked-button color="accent" class="secondary-cta" (click)="scrollToCategories()">
+            <mat-icon>arrow_downward</mat-icon>
+            Browse Categories
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Categories Section -->
+<div class="categories-section" #categoriesSection>
+  <div class="section-header">
+    <h2 class="section-title">Browse by Category</h2>
+    <p class="section-subtitle">Find exactly what you're looking for</p>
+  </div>
+
+  <div class="categories-grid">
+    <!-- Real Estate Card -->
+    <mat-card class="category-card real-estate" (click)="navigateToCategory('realestate')">
+      <mat-card-header>
+        <div mat-card-avatar class="category-avatar real-estate-avatar">
+          <mat-icon>real_estate_agent</mat-icon>
+        </div>
+        <mat-card-title>Real Estate</mat-card-title>
+        <mat-card-subtitle>Properties & Homes</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Discover your dream home, investment properties, or commercial real estate opportunities.</p>
+        <div class="category-stats">
+          <span class="stat-item">
+            <mat-icon>home</mat-icon>
+            <span>Premium Properties</span>
+          </span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary">
+          <mat-icon>arrow_forward</mat-icon>
+          Explore Properties
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Autos Card -->
+    <mat-card class="category-card autos" (click)="navigateToCategory('autos')">
+      <mat-card-header>
+        <div mat-card-avatar class="category-avatar autos-avatar">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <mat-card-title>Autos</mat-card-title>
+        <mat-card-subtitle>Vehicles & Transportation</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Find the perfect vehicle - from luxury cars to practical everyday transportation solutions.</p>
+        <div class="category-stats">
+          <span class="stat-item">
+            <mat-icon>speed</mat-icon>
+            <span>Quality Vehicles</span>
+          </span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary">
+          <mat-icon>arrow_forward</mat-icon>
+          Browse Vehicles
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Yachts Card -->
+    <mat-card class="category-card yachts" (click)="navigateToCategory('yachts')">
+      <mat-card-header>
+        <div mat-card-avatar class="category-avatar yachts-avatar">
+          <mat-icon>sailing</mat-icon>
+        </div>
+        <mat-card-title>Yachts</mat-card-title>
+        <mat-card-subtitle>Luxury Marine Vessels</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Explore premium yachts and marine vessels for the ultimate luxury experience on water.</p>
+        <div class="category-stats">
+          <span class="stat-item">
+            <mat-icon>waves</mat-icon>
+            <span>Luxury Fleet</span>
+          </span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary">
+          <mat-icon>arrow_forward</mat-icon>
+          View Yachts
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Jobs Card -->
+    <mat-card class="category-card jobs" (click)="navigateToCategory('jobs')">
+      <mat-card-header>
+        <div mat-card-avatar class="category-avatar jobs-avatar">
+          <mat-icon>work</mat-icon>
+        </div>
+        <mat-card-title>Jobs</mat-card-title>
+        <mat-card-subtitle>Career Opportunities</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Discover exciting career opportunities and find your next professional adventure.</p>
+        <div class="category-stats">
+          <span class="stat-item">
+            <mat-icon>trending_up</mat-icon>
+            <span>Growth Opportunities</span>
+          </span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary">
+          <mat-icon>arrow_forward</mat-icon>
+          Find Jobs
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+  <div class="section-header">
+    <h2 class="section-title">Why Choose Jafinda?</h2>
+    <p class="section-subtitle">Experience the difference</p>
+  </div>
+
+  <div class="features-grid">
+    <mat-card class="feature-card">
+      <mat-icon class="feature-icon">verified</mat-icon>
+      <h3>Verified Listings</h3>
+      <p>All listings are thoroughly verified to ensure quality and authenticity.</p>
+    </mat-card>
+
+    <mat-card class="feature-card">
+      <mat-icon class="feature-icon">support_agent</mat-icon>
+      <h3>Expert Support</h3>
+      <p>Our dedicated team provides professional guidance throughout your journey.</p>
+    </mat-card>
+
+    <mat-card class="feature-card">
+      <mat-icon class="feature-icon">security</mat-icon>
+      <h3>Secure Platform</h3>
+      <p>Advanced security measures protect your data and ensure safe transactions.</p>
+    </mat-card>
+  </div>
+</div>

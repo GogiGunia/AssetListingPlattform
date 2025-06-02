@@ -16,15 +16,21 @@ export class LogoutService {
    * Perform complete logout with navigation
    */
   public logout(redirectToLogin: boolean = true): Observable<void> {
-    // Clear tokens
+   /* console.log('LogoutService: Performing logout, redirect:', redirectToLogin);*/
+
+    // Clear tokens first - this will trigger token service logout
     this.jwtTokenService.logout();
 
-    // Clear user data
+    // Clear user data - this should be triggered by token service, but ensure it happens
     this.userService.clearUser();
+
+  /*  console.log('LogoutService: Logout complete');*/
 
     // Navigate to login page
     if (redirectToLogin) {
-      this.router.navigate(['/login']);
+      setTimeout(() => {
+        this.router.navigate(['/login']);
+      }, 100);
     }
 
     return of(void 0);
@@ -34,6 +40,7 @@ export class LogoutService {
    * Silent logout (no navigation)
    */
   public silentLogout(): void {
+   /* console.log('LogoutService: Performing silent logout');*/
     this.jwtTokenService.logout();
     this.userService.clearUser();
   }

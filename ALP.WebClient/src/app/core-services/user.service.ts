@@ -1,22 +1,23 @@
 // user.service.ts - Complete user service
 import { Injectable, signal, WritableSignal, computed, Signal, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, Subscription, map } from 'rxjs';
+import { Observable, Subject, Subscription, map, catchError, throwError } from 'rxjs';
 import {
   User,
   UserWithPermissions,
-  DisplayUser,
   AuthenticationState,
   UserRoleEnum,
-  UserProfile,
   UserUpdateModel,
   AccessLevel,
   PartialUserState,
-  LoginUserViewModel
+  LoginUserViewModel,
+  UserCreateModel,
+  RegisterRequest
 } from '../core-models/auth.model';
 import { LanguageEnum } from '../core-models/common-interfaces';
 import { StorageService } from './storage/storage.service';
 import { TokenService } from './token/token.service';
-
+import { HttpService } from './data-provider/services/http.service';
+import { HttpRequestOptions } from './data-provider/model/HttpRequestOptions';
 
 @Injectable()
 export class UserService implements OnDestroy {
@@ -34,9 +35,14 @@ export class UserService implements OnDestroy {
   public readonly isProfileComplete: Signal<boolean> = this._isProfileComplete.asReadonly();
 
   // Computed signals for derived state
-  public readonly isAuthenticated: Signal<boolean> = computed(() =>
-    this._currentUser() !== null || this._partialUserState() !== null
-  );
+  public readonly isAuthenticated: Signal<boolean> = computed(() => {
+    const user = this._currentUser();
+    const partialUser = this._partialUserState();
+    const hasValidToken = this.tokenService.hasValidToken$.value;
+
+    // User is authenticated if they have a current user OR valid tokens
+    return (user !== null || partialUser !== null) && !!hasValidToken;
+  });
 
   public readonly userEmail: Signal<string | null> = computed(() => {
     const user = this._currentUser();
@@ -47,8 +53,11 @@ export class UserService implements OnDestroy {
   public readonly userDisplayName: Signal<string> = computed(() => {
     const user = this._currentUser();
     if (user) {
+      //console.log("user display name");
+      //console.log(user);
       return `${user.firstName} ${user.lastName}`;
     }
+
     const partialUser = this._partialUserState();
     return partialUser ? partialUser.email : '';
   });
@@ -62,33 +71,24 @@ export class UserService implements OnDestroy {
     return partialUser ? partialUser.email.charAt(0).toUpperCase() : '';
   });
 
-  public readonly displayUser: Signal<DisplayUser | null> = computed(() => {
-    const user = this._currentUser();
-    return user ? {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName
-    } : null;
-  });
-
   // Role-based computed signals
   public readonly isAdmin: Signal<boolean> = computed(() =>
-    this._currentUser()?.userRoleId === 'Admin'
+    this._currentUser()?.role === 'Admin'
   );
 
   public readonly isBusinessUser: Signal<boolean> = computed(() =>
-    this._currentUser()?.userRoleId === 'BusinessUser'
+    this._currentUser()?.role === 'BusinessUser'
   );
 
   public readonly isClientUser: Signal<boolean> = computed(() =>
-    this._currentUser()?.userRoleId === 'ClientUser'
+    this._currentUser()?.role === 'ClientUser'
   );
 
   public readonly accessLevel: Signal<AccessLevel | undefined> = computed(() => {
     const user = this._currentUser();
     if (!user) return undefined;
 
-    switch (user.userRoleId) {
+    switch (user.role) {
       case 'Admin': return AccessLevel.Elevated;
       case 'BusinessUser':
       case 'ClientUser': return AccessLevel.General;
@@ -109,8 +109,11 @@ export class UserService implements OnDestroy {
 
   constructor(
     private tokenService: TokenService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private httpService: HttpService
   ) {
+    //console.log('UserService: Initializing...');
+
     // Create authentication state observable
     this.authenticationState$ = this.tokenService.hasValidToken$.pipe(
       map(tokenType => ({
@@ -121,7 +124,24 @@ export class UserService implements OnDestroy {
       }))
     );
 
-    this.initializeUserState();
+    // Wait for token service to initialize before initializing user state
+    if (this.tokenService.isInitialized()) {
+      this.initializeUserState();
+    } else {
+      // Wait for token service initialization
+      const initSub = new Promise<void>((resolve) => {
+        const checkInit = () => {
+          if (this.tokenService.isInitialized()) {
+            this.initializeUserState();
+            resolve();
+          } else {
+            setTimeout(checkInit, 10);
+          }
+        };
+        checkInit();
+      });
+    }
+
     this.setupTokenServiceSubscription();
   }
 
@@ -132,30 +152,78 @@ export class UserService implements OnDestroy {
   }
 
   /**
+   * Create a new user account
+   */
+  public createUser(registerRequest: RegisterRequest): Observable<User> {
+    const options = new HttpRequestOptions('User/Create', 'json', 'body')
+      .setBody(registerRequest).noAuthRequired();
+
+    return this.httpService.Post<User>(options).pipe(
+      map((response: User) => {
+        //console.log('User created successfully:', response);
+        return response;
+      }),
+      catchError((error) => {
+        //console.error('User creation failed:', error);
+
+        // Transform error for better handling
+        let errorMessage = 'Registration failed. Please try again.';
+
+        if (error.status === 400) {
+          errorMessage = 'Invalid registration data. Please check your inputs.';
+        } else if (error.status === 409) {
+          errorMessage = 'An account with this email already exists.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        // Return a more structured error
+        const transformedError = {
+          ...error,
+          message: errorMessage,
+          originalError: error
+        };
+
+        return throwError(() => transformedError);
+      })
+    );
+  }
+
+  /**
    * Initialize user state from storage and token service
    */
   private initializeUserState(): void {
-    // Load user from storage if available
-    const storedUser = this.loadUserFromStorage();
-    if (storedUser) {
-      const hasValidToken = this.tokenService.hasValidToken$.value;
-      if (hasValidToken) {
+    //console.log('UserService: Initializing user state...');
+
+    // Check if we have valid tokens first
+    const hasValidToken = this.tokenService.hasValidToken$.value;
+    //console.log('UserService: Has valid token:', hasValidToken);
+
+    if (hasValidToken) {
+      // Load user from storage if available and tokens are valid
+      const storedUser = this.loadUserFromStorage();
+      if (storedUser) {
+        //console.log('UserService: Loaded user from storage:', storedUser.email);
         this._currentUser.set(storedUser);
         this._isProfileComplete.set(true);
       } else {
-        this.clearUserFromStorage();
-
+        //console.log('UserService: No stored user found, but have valid tokens');
+        // We have tokens but no stored user - this is a valid state
+        // The user might need to be loaded from the server using the token
       }
-     
-    }
 
-    // Load permissions from storage
-    const storedPermissions = this.loadPermissionsFromStorage();
-    if (storedPermissions) {
-      this._userPermissions.set(storedPermissions);
+      // Load permissions from storage
+      const storedPermissions = this.loadPermissionsFromStorage();
+      if (storedPermissions) {
+        this._userPermissions.set(storedPermissions);
+      }
+    } else {
+      //console.log('UserService: No valid tokens, clearing stored user');
+      this.clearUserFromStorage();
     }
 
     this._isInitialized.set(true);
+    //console.log('UserService: Initialization complete. Is authenticated:', this.isAuthenticated());
   }
 
   /**
@@ -163,13 +231,16 @@ export class UserService implements OnDestroy {
    */
   private setupTokenServiceSubscription(): void {
     const tokenSubscription = this.tokenService.hasValidToken$.subscribe(tokenType => {
+      //console.log('UserService: Token state changed:', tokenType);
       if (!tokenType) {
         // Token is invalid or cleared - clear user data
+        //console.log('UserService: Clearing user data due to invalid tokens');
         this.clearUser();
       }
     });
 
     const logoutSubscription = this.tokenService.logout$.subscribe(() => {
+      //console.log('UserService: Logout event received from token service');
       this.clearUser();
     });
 
@@ -178,42 +249,54 @@ export class UserService implements OnDestroy {
   }
 
   /**
-   * Handle login response from backend - sets partial user state
+   * Handle login response from backend - sets user data and ensures tokens are stored
    */
-  public handleLoginResponse(loginResponse: LoginUserViewModel): void {
-    // Set partial user state with just email
-    this._partialUserState.set({
+  public handleLoginResponse(loginResponse: User): void {
+    //console.log('UserService: Handling login response for:', loginResponse.email);
+
+    // FIXED: Ensure tokens are properly set in token service
+    this.tokenService.setTokens(loginResponse.accessToken, loginResponse.refreshToken);
+
+    // Set complete user data
+    this._currentUser.set({
+      id: loginResponse.id,
+      accessToken: loginResponse.accessToken,
+      refreshToken: loginResponse.refreshToken,
       email: loginResponse.email,
-      isProfileLoaded: false
+      firstName: loginResponse.firstName,
+      lastName: loginResponse.lastName,
+      role: loginResponse.role,
+      languageIso: loginResponse.languageIso
     });
 
-    this._isProfileComplete.set(false);
-    this.userChange$.next(null); // No full user yet
+    this._partialUserState.set(null); // Clear any partial state
+    this._isProfileComplete.set(true);
 
-    // Note: Full user profile should be loaded separately via loadUserProfile()
+    // Save user to storage
+    this.saveUserToStorage(this._currentUser()!);
+    this.userChange$.next(this._currentUser());
+
+    //console.log('UserService: Login handled successfully. User authenticated:', this.isAuthenticated());
   }
 
   /**
    * Load complete user profile (call this after login to get full user data)
    */
-  public setUserProfile(userProfile: UserProfile): void {
+  public setUserProfile(userProfile: User): void {
     const user: User = {
       id: userProfile.id,
+      accessToken: userProfile.accessToken,
+      refreshToken: userProfile.refreshToken,
       email: userProfile.email,
       firstName: userProfile.firstName,
       lastName: userProfile.lastName,
-      userRoleId: userProfile.userRoleId,
+      role: userProfile.role,
       languageIso: userProfile.languageIso
     };
 
     this._currentUser.set(user);
     this._partialUserState.set(null); // Clear partial state
     this._isProfileComplete.set(true);
-
-    // Handle permissions if provided
-    if (userProfile.permitListingIds) {
-      this.setUserPermissions(userProfile.permitListingIds);
-    }
 
     this.saveUserToStorage(user);
     this.userChange$.next(user);
@@ -262,6 +345,7 @@ export class UserService implements OnDestroy {
    * Clear current user data and permissions
    */
   public clearUser(): void {
+    //console.log('UserService: Clearing user data');
     this._currentUser.set(null);
     this._partialUserState.set(null);
     this._userPermissions.set([]);
@@ -274,11 +358,11 @@ export class UserService implements OnDestroy {
 
   // Role and permission checks
   public hasRole(role: UserRoleEnum): boolean {
-    return this._currentUser()?.userRoleId === role;
+    return this._currentUser()?.role === role;
   }
 
   public hasAnyRole(roles: UserRoleEnum[]): boolean {
-    const currentRole = this._currentUser()?.userRoleId;
+    const currentRole = this._currentUser()?.role;
     return currentRole ? roles.includes(currentRole) : false;
   }
 
@@ -305,11 +389,7 @@ export class UserService implements OnDestroy {
   }
 
   public getCurrentUserRole(): UserRoleEnum | null {
-    return this._currentUser()?.userRoleId ?? null;
-  }
-
-  public getDisplayUser(): DisplayUser | null {
-    return this.displayUser();
+    return this._currentUser()?.role ?? null;
   }
 
   public isReady(): boolean {
@@ -327,9 +407,10 @@ export class UserService implements OnDestroy {
   // Private storage methods using typed storage service
   private saveUserToStorage(user: User): void {
     try {
+      //console.log('UserService: Saving user to storage:', user.email);
       this.storageService.save('LOCAL', 'CURRENT_USER', JSON.stringify(user));
     } catch (error) {
-      console.warn('Failed to save user to storage:', error);
+      //console.warn('Failed to save user to storage:', error);
     }
   }
 
@@ -337,10 +418,12 @@ export class UserService implements OnDestroy {
     try {
       const userData = this.storageService.load('LOCAL', 'CURRENT_USER');
       if (userData) {
-        return JSON.parse(userData);
+        const user = JSON.parse(userData);
+        //console.log('UserService: Loaded user from storage:', user.email);
+        return user;
       }
     } catch (error) {
-      console.warn('Failed to load user from storage:', error);
+      //console.warn('Failed to load user from storage:', error);
       this.clearUserFromStorage();
     }
     return null;
@@ -348,9 +431,10 @@ export class UserService implements OnDestroy {
 
   private clearUserFromStorage(): void {
     try {
+      //console.log('UserService: Clearing user from storage');
       this.storageService.remove('LOCAL', 'CURRENT_USER');
     } catch (error) {
-      console.warn('Failed to clear user from storage:', error);
+      //console.warn('Failed to clear user from storage:', error);
     }
   }
 
@@ -358,7 +442,7 @@ export class UserService implements OnDestroy {
     try {
       this.storageService.save('LOCAL', 'USER_PERMISSIONS', JSON.stringify(permissions));
     } catch (error) {
-      console.warn('Failed to save permissions to storage:', error);
+      //console.warn('Failed to save permissions to storage:', error);
     }
   }
 
@@ -369,7 +453,7 @@ export class UserService implements OnDestroy {
         return JSON.parse(permissionsData);
       }
     } catch (error) {
-      console.warn('Failed to load permissions from storage:', error);
+      //console.warn('Failed to load permissions from storage:', error);
       this.clearPermissionsFromStorage();
     }
     return null;
@@ -379,7 +463,7 @@ export class UserService implements OnDestroy {
     try {
       this.storageService.remove('LOCAL', 'USER_PERMISSIONS');
     } catch (error) {
-      console.warn('Failed to clear permissions from storage:', error);
+      //console.warn('Failed to clear permissions from storage:', error);
     }
   }
 }

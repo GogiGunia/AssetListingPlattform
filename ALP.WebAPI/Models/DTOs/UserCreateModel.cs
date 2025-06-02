@@ -1,5 +1,6 @@
 ﻿using ALP.Model.Model;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ALP.WebAPI.Models.DTOs
 {
@@ -13,6 +14,7 @@ namespace ALP.WebAPI.Models.DTOs
         [Required]
         public required string LastName { get; set; }
         [Required]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public UserRole Role { get; set; }
     }
 }

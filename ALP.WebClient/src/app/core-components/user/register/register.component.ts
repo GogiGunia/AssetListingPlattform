@@ -7,9 +7,18 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { RegisterRequest, UserRoleEnum } from '../../../core-models/auth.model';
+import { UserService } from '../../../core-services/user.service';
+
+interface RoleOption {
+  value: UserRoleEnum;
+  displayName: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-register',
@@ -19,6 +28,7 @@ import { Router } from '@angular/router';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -34,10 +44,25 @@ export class RegisterComponent implements OnInit {
   hideConfirmPassword = true;
   isLoading = false;
 
+  // Role options for the select dropdown
+  roleOptions: RoleOption[] = [
+    {
+      value: 'ClientUser' as UserRoleEnum,
+      displayName: 'Client',
+      icon: 'person'
+    },
+    {
+      value: 'BusinessUser' as UserRoleEnum,
+      displayName: 'Business User',
+      icon: 'business'
+    }
+  ];
+
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private userService: UserService
   ) { }
 
   ngOnInit(): void {
@@ -47,8 +72,10 @@ export class RegisterComponent implements OnInit {
   // Initialize the reactive form with custom validators
   private initializeForm(): void {
     this.registerForm = this.formBuilder.group({
-      fullName: ['', [Validators.required, Validators.minLength(2)]],
+      firstName: ['', [Validators.required, Validators.minLength(2)]],
+      lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
+      role: ['ClientUser', [Validators.required]], // Default to ClientUser
       password: ['', [
         Validators.required,
         Validators.minLength(8),
@@ -108,18 +135,21 @@ export class RegisterComponent implements OnInit {
     if (this.registerForm.valid) {
       this.isLoading = true;
 
-      // Get form values
-      const registerData = {
-        fullName: this.registerForm.get('fullName')?.value,
-        email: this.registerForm.get('email')?.value,
-        password: this.registerForm.get('password')?.value,
-        acceptTerms: this.registerForm.get('acceptTerms')?.value
+      // Get form values and create the request object to match backend expectations
+      const registerRequest: RegisterRequest = {
+        userModel: {
+          email: this.registerForm.get('email')?.value.trim(),
+          firstName: this.registerForm.get('firstName')?.value.trim(),
+          lastName: this.registerForm.get('lastName')?.value.trim(),
+          role: this.registerForm.get('role')?.value as UserRoleEnum // Get selected role from form
+        },
+        password: this.registerForm.get('password')?.value
       };
 
-      console.log('Registration attempted with data:', registerData);
+/*      console.log('Registration attempted with data:', registerRequest);*/
 
-      // TODO: Replace this template function with your actual registration logic
-      this.performRegistration(registerData);
+      // Call the actual registration method
+      this.performRegistration(registerRequest);
     } else {
       // Mark all fields as touched to show validation errors
       this.registerForm.markAllAsTouched();
@@ -127,61 +157,54 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  // Template function for the actual registration process
-  private performRegistration(registerData: { fullName: string; email: string; password: string; acceptTerms: boolean }): void {
-    // Simulate API call delay
-    setTimeout(() => {
-      this.isLoading = false;
-
-      // TODO: Replace this with your actual registration service call
-      // Example structure:
-      // this.authService.register(registerData).subscribe({
-      //   next: (response) => {
-      //     this.handleRegistrationSuccess(response);
-      //   },
-      //   error: (error) => {
-      //     this.handleRegistrationError(error);
-      //   }
-      // });
-
-      // For now, simulate success/failure based on email
-      if (registerData.email === 'existing@example.com') {
-        this.handleRegistrationError({ message: 'Email already exists' });
-      } else {
-        this.handleRegistrationSuccess({
-          token: 'fake-jwt-token',
-          user: {
-            id: 1,
-            email: registerData.email,
-            name: registerData.fullName
-          }
-        });
+  // Updated performRegistration method to match your backend endpoint
+  private performRegistration(registerRequest: RegisterRequest): void {
+    this.userService.createUser(registerRequest).subscribe({
+      next: (response) => {
+        this.handleRegistrationSuccess(response);
+      },
+      error: (error) => {
+        this.handleRegistrationError(error);
+      },
+      complete: () => {
+        this.isLoading = false;
       }
-    }, 2500);
+    });
   }
 
   // Handle successful registration
   private handleRegistrationSuccess(response: any): void {
-    console.log('Registration successful:', response);
+    /*console.log('Registration successful:', response);*/
 
-    // TODO: Store authentication token, user data, etc.
-    // localStorage.setItem('authToken', response.token);
-    // this.authService.setCurrentUser(response.user);
+    // TODO: Handle the successful registration response
+    // You might want to:
+    // 1. Store user data if the response includes tokens
+    // 2. Redirect to login page for user to sign in
+    // 3. Or automatically log them in if your backend returns tokens
 
-    this.showSnackBar('Account created successfully! Welcome aboard.', 'success');
+    this.showSnackBar(`Account created successfully for ${response.firstName} ${response.lastName}!`, 'success');
 
-    // Navigate to home or onboarding page
-    this.router.navigate(['/home']);
+    // Navigate to login page for user to sign in
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+    }, 2000);
   }
 
   // Handle registration error
   private handleRegistrationError(error: any): void {
-    console.error('Registration failed:', error);
+/*    console.error('Registration failed:', error);*/
 
     let errorMessage = 'Registration failed. Please try again.';
 
+    // Handle specific error messages from your backend
     if (error.message) {
       errorMessage = error.message;
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.status === 400) {
+      errorMessage = 'Invalid registration data. Please check your inputs.';
+    } else if (error.status === 409) {
+      errorMessage = 'An account with this email already exists.';
     }
 
     this.showSnackBar(errorMessage, 'error');
@@ -195,7 +218,7 @@ export class RegisterComponent implements OnInit {
   // Open terms and conditions (template function)
   openTerms(event: Event): void {
     event.preventDefault();
-    console.log('Terms and conditions requested');
+   /* console.log('Terms and conditions requested');*/
 
     // TODO: Implement terms and conditions modal or navigation
     this.showSnackBar('Terms and conditions will open in a modal', 'info');
@@ -208,7 +231,7 @@ export class RegisterComponent implements OnInit {
   // Open privacy policy (template function)
   openPrivacyPolicy(event: Event): void {
     event.preventDefault();
-    console.log('Privacy policy requested');
+  /*  console.log('Privacy policy requested');*/
 
     // TODO: Implement privacy policy modal or navigation
     this.showSnackBar('Privacy policy will open in a modal', 'info');

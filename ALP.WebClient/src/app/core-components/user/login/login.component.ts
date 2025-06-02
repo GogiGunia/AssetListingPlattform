@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { LoginRequest, LoginUserViewModel } from '../../../core-models/auth.model';
+import { LoginRequest, LoginUserViewModel, User } from '../../../core-models/auth.model';
 import { UserService } from '../../../core-services/user.service';
 import { TokenService } from '../../../core-services/token/token.service';
 
@@ -59,7 +59,11 @@ export class LoginComponent implements OnInit, OnDestroy {
    * Check if user is already authenticated and redirect if needed
    */
   private checkExistingAuthentication(): void {
+    ////console.log('Login: Checking existing authentication...');
+    ////console.log('Login: Is authenticated:', this.userService.isAuthenticated());
+
     if (this.userService.isAuthenticated()) {
+      //console.log('Login: User already authenticated, redirecting to home');
       this.router.navigate(['/home']);
     }
   }
@@ -101,6 +105,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         password: this.loginForm.get('password')?.value
       };
 
+      //console.log('Login: Attempting login for:', loginRequest.email);
       this.performLogin(loginRequest);
     } else {
       this.loginForm.markAllAsTouched();
@@ -114,10 +119,12 @@ export class LoginComponent implements OnInit, OnDestroy {
   private performLogin(loginRequest: LoginRequest): void {
     const loginSubscription = this.jwtTokenService.authenticate(loginRequest)
       .subscribe({
-        next: (response: LoginUserViewModel) => {
+        next: (response: User) => {
+          //console.log('Login: Authentication successful for:', response.email);
           this.handleLoginSuccess(response);
         },
         error: (error) => {
+          //console.error('Login: Authentication failed:', error);
           this.handleLoginError(error);
         },
         complete: () => {
@@ -131,44 +138,27 @@ export class LoginComponent implements OnInit, OnDestroy {
   /**
    * Handle successful login response
    */
-  private handleLoginSuccess(response: LoginUserViewModel): void {
-    console.log('Login successful:', response);
+  private handleLoginSuccess(response: User): void {
+    /*console.log('Login: Handling successful login response');*/
 
-    // Set partial user state (just email from login response)
+    // FIXED: Use handleLoginResponse which properly sets tokens and user data
     this.userService.handleLoginResponse(response);
 
     this.showSnackBar('Login successful! Welcome back.', 'success');
 
-    // TODO: Load full user profile here if needed
-    // You might want to call another endpoint to get complete user data
-    // this.loadUserProfile(response.email);
+    //console.log('Login: User authenticated:', this.userService.isAuthenticated());
 
     // Navigate to home or dashboard
-    this.router.navigate(['/home']);
-  }
-
-  /**
-   * Optional: Load complete user profile after login
-   * Call this if you have an endpoint that returns full user data
-   */
-  private loadUserProfile(email: string): void {
-    // Example implementation:
-    // this.userProfileService.getUserProfile(email).subscribe({
-    //   next: (userProfile: UserProfile) => {
-    //     this.userService.setUserProfile(userProfile);
-    //   },
-    //   error: (error) => {
-    //     console.warn('Failed to load user profile:', error);
-    //     // User is still authenticated, just missing full profile
-    //   }
-    // });
+    setTimeout(() => {
+      this.router.navigate(['/home']);
+    }, 500);
   }
 
   /**
    * Handle login errors
    */
   private handleLoginError(error: any): void {
-    console.error('Login failed:', error);
+    //console.error('Login failed:', error);
 
     let errorMessage = 'Login failed. Please try again.';
 
@@ -199,7 +189,7 @@ export class LoginComponent implements OnInit, OnDestroy {
    * Handle forgot password
    */
   onForgotPassword(): void {
-    console.log('Forgot password requested');
+    //console.log('Forgot password requested');
 
     // TODO: Implement forgot password logic
     this.showSnackBar('Forgot password feature coming soon!', 'info');

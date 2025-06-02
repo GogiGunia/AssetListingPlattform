@@ -4,10 +4,12 @@ import { LanguageEnum } from "./common-interfaces";
 // Your existing auth models (keeping them as-is)
 export interface User {
   id: number;
+  accessToken: string;
+  refreshToken: string;
   email: string;
   firstName: string;
   lastName: string;
-  userRoleId: UserRoleEnum;
+  role: UserRoleEnum;
   languageIso: LanguageEnum;
 }
 
@@ -34,6 +36,9 @@ export interface LoginUserViewModel {
   email: string;
   accessToken: string;
   refreshToken: string;
+  firstName: string;
+  lastName: string;
+  role: UserRoleEnum
 }
 
 // For token service compatibility
@@ -53,6 +58,20 @@ export interface AuthenticationState {
 // Login request interface
 export interface LoginRequest {
   email: string;
+  password: string;
+}
+
+// ADD THIS: Registration request interface to match your backend UserCreateModel
+export interface UserCreateModel {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRoleEnum;
+}
+
+// Registration request with password (what we send to backend)
+export interface RegisterRequest {
+  userModel: UserCreateModel;
   password: string;
 }
 

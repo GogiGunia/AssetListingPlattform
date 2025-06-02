@@ -13,39 +13,55 @@
 .layout-content {
   width: 100%;
   max-width: var(--layout-max-width, 1200px);
-  // Default grid layout for dynamic content
-  display: grid;
+  // Use flexbox for single items to ensure proper centering
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: var(--layout-gap, 24px);
-  // Responsive grid columns
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  // CENTER GRID ITEMS - This is the key fix
-  justify-items: center;
-  align-items: start;
-  // Auto-adjust rows
-  grid-auto-rows: auto;
+  // When we have multiple items, switch to grid
+  &.multiple-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    justify-content: center;
+    align-items: start;
+    justify-items: center;
+  }
   // Full width for single elements (like login forms)
   &.single-column {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-width: 400px;
     margin: 0 auto;
   }
   // Two columns layout
   &.two-columns {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    justify-content: center;
+    justify-items: center;
   }
   // Three columns layout
   &.three-columns {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    justify-content: center;
+    justify-items: center;
   }
   // Four columns layout for products/cards
   &.four-columns {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    justify-content: center;
+    justify-items: center;
   }
   // Profile layout - mixed content
   &.profile-layout {
+    display: grid;
     grid-template-columns: 300px 1fr;
     grid-template-areas:
       "sidebar main" "sidebar main";
+    justify-content: center;
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
@@ -55,23 +71,44 @@
   }
   // List layout for vertical content
   &.list-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: var(--layout-gap, 16px);
   }
 }
 
+.grid-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: inherit;
+}
+
 // Target direct children of layout-content (router-outlet content)
-.layout-content > * {
-  justify-self: center;
-  align-self: start;
+.layout-content > *,
+.grid-wrapper > * {
+  // Center all items
+  margin: 0 auto;
   max-width: fit-content;
 }
 
 // Specific targeting for Material cards
 .layout-content mat-card,
-.layout-content .mat-mdc-card {
+.layout-content .mat-mdc-card,
+.grid-wrapper mat-card,
+.grid-wrapper .mat-mdc-card {
   margin: 0 auto;
-  justify-self: center;
+  // Enhanced card shadow to work well with toolbar shadow
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.06);
+  // Smooth transition for card interactions
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
 }
 
 // Responsive breakpoints
@@ -87,7 +124,10 @@
   }
 
   .layout-content {
-    grid-template-columns: 1fr !important;
+    // Force flex layout on mobile for better centering
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
     gap: 16px;
   }
 }

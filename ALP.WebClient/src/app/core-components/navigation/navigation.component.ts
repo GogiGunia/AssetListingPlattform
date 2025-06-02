@@ -37,15 +37,15 @@ export class NavigationComponent {
   constructor() {
     // Effect to log navigation items changes
     effect(() => {
-      console.log("Navigation component - Navigation items changed:");
-      console.log(this.navigationItemsSignal());
-      console.log("Navigation component - Active item:");
-      console.log(this.activeItemSignal());
+      //console.log("Navigation component - Navigation items changed:");
+      //console.log(this.navigationItemsSignal());
+      //console.log("Navigation component - Active item:");
+      //console.log(this.activeItemSignal());
     });
   }
 
   public onNavigationClick(item: NavigationItem) {
-    console.log("Navigation component - Item clicked:", item);
+   /* console.log("Navigation component - Item clicked:", item);*/
 
     // Update active state locally (for immediate UI feedback)
     const updatedItems = this.navigationItemsSignal().map(navItem => ({

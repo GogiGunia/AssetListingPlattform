@@ -60,7 +60,7 @@ export abstract class DecodedJwtTokenBase implements DecodedToken {
           this.claims = JSON.parse(atob(payload));
         }
       } catch (e) {
-        console.error("Error decoding JWT payload:", e);
+        //console.error("Error decoding JWT payload:", e);
         this.claims = {}; 
       }
     }
@@ -78,9 +78,9 @@ export abstract class DecodedJwtTokenBase implements DecodedToken {
 
   protected logExpiration(tokenName: string): void {
     if (isDevMode() && this.exp) {
-      console.log(`${tokenName} expiration: `, new Date(this.exp * 1000).toLocaleString());
+    //  console.log(`${tokenName} expiration: `, new Date(this.exp * 1000).toLocaleString());
     } else if (isDevMode() && !this.exp) {
-      console.warn(`${tokenName} has no expiration claim (exp).`);
+    //  console.warn(`${tokenName} has no expiration claim (exp).`);
     }
   }
 }
@@ -108,7 +108,7 @@ export class DecodedPasswordResetToken extends DecodedJwtTokenBase {
     super(token);
     this.logExpiration("Password Reset Token");
     if (isDevMode() && !this.passwordResetGuid) {
-      console.warn("Password Reset Token is missing 'passwordResetGuid' claim.");
+    //  console.warn("Password Reset Token is missing 'passwordResetGuid' claim.");
     }
   }
 }

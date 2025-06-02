@@ -10,15 +10,42 @@
   text-transform: none;
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
-
+  border-radius: 6px;
+  // Simple hover state
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.12);
     color: white;
   }
-
+  // Active state with hero gradient - solid and subtle
   &.active {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: red;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
     font-weight: 600;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  }
+  // Focus state for accessibility
+  &:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 1px;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .navigation-container {
+    gap: 4px;
+  }
+
+  .nav-item {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-item {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    letter-spacing: 0.25px;
   }
 }
